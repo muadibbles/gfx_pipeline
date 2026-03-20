@@ -23,8 +23,10 @@ The sphere is built from three overlapping ring systems, each drawn as projected
 Each ring is an ellipse whose width/height is determined by its latitude position on
 the sphere (cos/sin of the polar angle). All rings share the same center point.
 
-Animation rotates the phase offset of each ring system at slightly different speeds,
-creating the gyroscopic / spirograph feel.
+The rings are **fixed in 3D space**. Animation moves the **camera** in a slow elliptical
+orbit around the sphere (like a satellite). The viewpoint tilts slightly above/below
+the equator over time, giving a gentle rise-and-fall to the orbit path. Perspective
+projection makes near rings appear larger and far rings smaller.
 
 ## File structure
 ```
@@ -35,7 +37,8 @@ gfx_pipeline/
 
 ## Controls (sidebar panel)
 - **Rings per layer** — slider (10–60)
-- **Rotation speed** — slider
+- **Orbit speed** — slider (camera angular velocity)
+- **Orbit tilt** — slider (how far above/below equator camera bobs)
 - **Glow intensity** — slider (uses Canvas shadow blur)
 - **Color scheme** — dropdown (Neon / Pastel / Monochrome / Custom)
 - **Dot layer** — toggle on/off
