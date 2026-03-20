@@ -3,15 +3,16 @@ const M=Math,q=c.getContext('2d'),N=20,SEG=80;
 let az=0,el=0,drag=0,daz=0,dx=0,dy=0,de=0,prev=0,W;
 
 const shells=[
-  {r:175,color:'#ff3355',glow:'#ff2244'},
-  {r:220,color:'#4488ff',glow:'#3377ff'},
-  {r:265,color:'#33ff77',glow:'#22ff66'},
+  {r:197,color:'#ff3355',glow:'#ff2244'},
+  {r:220,color:'#33ff77',glow:'#22ff66'},
+  {r:243,color:'#4488ff',glow:'#3377ff'},
 ];
 
+const T=39*M.PI/180,ct=M.cos(T),st=M.sin(T);
 shells.forEach(s=>{
   s.rings=Array.from({length:N},(_,i)=>{
     const phi=M.PI*(i+.5)/N-M.PI/2,y=s.r*M.sin(phi),r=s.r*M.cos(phi);
-    return Array.from({length:SEG+1},(_,j)=>{const t=j/SEG*6.283;return[r*M.cos(t),y,r*M.sin(t)]});
+    return Array.from({length:SEG+1},(_,j)=>{const t=j/SEG*6.283,x=r*M.cos(t),z=r*M.sin(t);return[x,y*ct-z*st,y*st+z*ct]});
   });
 });
 
