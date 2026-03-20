@@ -1,11 +1,11 @@
 <body style=margin:0><canvas id=c style="touch-action:none"></canvas><script>
-const M=Math,q=c.getContext('2d'),N=20,SEG=80;
+const M=Math,q=c.getContext('2d'),N=20,SEG=130;
 let az=0,el=0,drag=0,daz=0,dx=0,dy=0,de=0,prev=0,W;
 
 const shells=[
-  {r:197,color:'#ff3355',glow:'#ff2244'},
-  {r:220,color:'#33ff77',glow:'#22ff66'},
-  {r:243,color:'#4488ff',glow:'#3377ff'},
+  {r:228,color:'#ff3355',glow:'#ff2244'},
+  {r:238,color:'#33ff77',glow:'#22ff66'},
+  {r:248,color:'#4488ff',glow:'#3377ff'},
 ];
 
 const T=39*M.PI/180,ct=M.cos(T),st=M.sin(T);
@@ -26,7 +26,7 @@ c.ontouchend=()=>drag=0;
 requestAnimationFrame(function L(ts){
   if(!drag)az+=.0003*(ts-prev);prev=ts;
   const E=.3*M.sin(ts*.00028)+el,ce=M.cos(E),se=M.sin(E);
-  const pos=[500*M.sin(az)*ce,500*se,500*M.cos(az)*ce];
+  const pos=[570*M.sin(az)*ce,570*se,570*M.cos(az)*ce];
   const fwd=nl(pos.map(v=>-v)),rgt=nl(cr(fwd,[0,1,0])),up=nl(cr(rgt,fwd)),FL=W*.85,cx=W/2;
   const pr=v=>{const d=sb(v,pos),xc=f(d,rgt),yc=f(d,up),zc=f(d,fwd);return zc<.5?0:[cx+FL*xc/zc,cx-FL*yc/zc]};
 
