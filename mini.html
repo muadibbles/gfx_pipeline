@@ -1,0 +1,41 @@
+<body style=margin:0><canvas id=c><script>
+const q=document.getElementById('c'),x=q.getContext('2d');
+let az=0,el=0,drag=0,daz=0,dx=0,dy=0,del=0,pt=0;
+const f=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const g=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const h=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+const nl=v=>{const l=Math.hypot(...v);return l<1e-9?[0,1,0]:v.map(c=>c/l)};
+const ra=(v,a,t)=>{const c=Math.cos(t),s=Math.sin(t),d=f(v,a),r=g(a,v);return v.map((x,i)=>x*c+r[i]*s+a[i]*d*(1-c))};
+const rx=(v,a)=>{const[c,s]=[Math.cos(a),Math.sin(a)];return[v[0],c*v[1]-s*v[2],s*v[1]+c*v[2]]};
+const rz=(v,a)=>{const[c,s]=[Math.cos(a),Math.sin(a)];return[c*v[0]-s*v[1],s*v[0]+c*v[1],v[2]]};
+const S=[[30,0,0,'#2255ff',1.5,[],.8e-4,0],[24,47,22,'#22ff55',1.2,[],.13e-3,1.05],[24,-47,-22,'#ff2266',1.2,[],.11e-3,2.3],[18,20,55,'#aaff33',1,[2,5],.18e-3,.7]];
+let W=q.width=q.height=Math.min(innerWidth,innerHeight);
+onresize=()=>{W=q.width=q.height=Math.min(innerWidth,innerHeight)};
+q.addEventListener('touchstart',e=>{drag=1;dx=e.touches[0].clientX;dy=e.touches[0].clientY;daz=az;del=el;e.preventDefault()},{passive:0});
+q.addEventListener('touchmove',e=>{az=daz+(e.touches[0].clientX-dx)*.005;el=Math.max(-1.3,Math.min(1.3,del+(dy-e.touches[0].clientY)*.005));e.preventDefault()},{passive:0});
+q.addEventListener('touchend',()=>drag=0);
+requestAnimationFrame(function loop(ts){
+  const dt=ts-pt;pt=ts;
+  if(!drag)az+=.0003*dt;
+  const E=.4*Math.sin(ts*.00028)+el;
+  const ce=Math.cos(E),se=Math.sin(E),ca=Math.cos(az),sa=Math.sin(az);
+  const pos=[680*sa*ce,680*se,680*ca*ce];
+  const fwd=nl(pos.map(v=>-v)),rgt=nl(g(fwd,[0,1,0])),up=nl(g(rgt,fwd));
+  const FL=W*.6,cx=W/2,cy=W/2;
+  const pr=p=>{const d=h(p,pos),xc=f(d,rgt),yc=f(d,up),zc=f(d,fwd);if(zc<.5)return 0;return[cx+FL*xc/zc,cy-FL*yc/zc]};
+  x.fillStyle='#000';x.fillRect(0,0,W,W);
+  S.forEach(([cnt,tx,tz,col,lw,dash,prc,ph])=>{
+    const axis=nl(rx(rz([0,1,0],tz*Math.PI/180),tx*Math.PI/180));
+    const perp=nl(g(axis,Math.abs(axis[0])<.9?[1,0,0]:[0,1,0]));
+    x.strokeStyle=col;x.lineWidth=lw;x.shadowColor=col;x.shadowBlur=9;x.setLineDash(dash);
+    for(let i=0;i<cnt;i++){
+      const n=ra(perp,axis,i/cnt*Math.PI+ph+ts*prc),u=axis,v=nl(g(n,axis));
+      x.beginPath();let pen=0,pv=0;
+      for(let j=0;j<=72;j++){const t=j/72*6.283,c=Math.cos(t),s=Math.sin(t);const p=pr([200*(c*u[0]+s*v[0]),200*(c*u[1]+s*v[1]),200*(c*u[2]+s*v[2])]);if(!p){pv=1;continue}if(!pen||pv){x.moveTo(...p);pen=1}else x.lineTo(...p);pv=0}
+      x.stroke();
+    }
+  });
+  x.shadowBlur=0;x.setLineDash([]);
+  requestAnimationFrame(loop);
+});
+</script>
