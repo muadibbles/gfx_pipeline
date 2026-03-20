@@ -26,18 +26,18 @@ c.ontouchend=()=>drag=0;
 requestAnimationFrame(function L(ts){
   if(!drag)az+=.0003*(ts-prev);prev=ts;
   const E=.3*M.sin(ts*.00028)+el,ce=M.cos(E),se=M.sin(E);
-  const pos=[780*M.sin(az)*ce,780*se,780*M.cos(az)*ce];
-  const fwd=nl(pos.map(v=>-v)),rgt=nl(cr(fwd,[0,1,0])),up=nl(cr(rgt,fwd)),FL=W*.6,cx=W/2;
+  const pos=[500*M.sin(az)*ce,500*se,500*M.cos(az)*ce];
+  const fwd=nl(pos.map(v=>-v)),rgt=nl(cr(fwd,[0,1,0])),up=nl(cr(rgt,fwd)),FL=W*.85,cx=W/2;
   const pr=v=>{const d=sb(v,pos),xc=f(d,rgt),yc=f(d,up),zc=f(d,fwd);return zc<.5?0:[cx+FL*xc/zc,cx-FL*yc/zc]};
 
   q.fillStyle='#000';q.fillRect(0,0,W,W);
   for(const s of shells){
-    q.strokeStyle=s.color;q.lineWidth=1.5;q.shadowColor=s.glow;q.shadowBlur=8;
+    q.fillStyle=s.color;q.shadowColor=s.glow;q.shadowBlur=8;
+    q.beginPath();
     for(const ring of s.rings){
-      q.beginPath();let pen=0,pv=0;
-      for(const v of ring){const p=pr(v);if(!p){pv=1;continue}pen&&!pv?q.lineTo(...p):q.moveTo(...p);pen=1;pv=0}
-      q.stroke();
+      for(const v of ring){const p=pr(v);if(!p)continue;q.moveTo(p[0]+1.5,p[1]);q.arc(p[0],p[1],1.5,0,6.283)}
     }
+    q.fill();
   }
   q.shadowBlur=0;
   requestAnimationFrame(L);
