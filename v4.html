@@ -163,6 +163,35 @@ requestAnimationFrame(function L(ts){
     }
   }
 
+  // compute shared planet screen radius
+  const pR=P.r0.v+2*P.gap.v;
+  const scrPR=W*P.fl.v*pR/M.sqrt(d*d-pR*pR);
+
+  // solid black planet disk — blocks stars, acts as natural occluder
+  q.shadowBlur=0;
+  q.fillStyle='#000';
+  q.beginPath();q.arc(cx,cx,scrPR,0,6.283);q.fill();
+
+  const mc=P.moons.v;
+  let front=[],back=[];
+  if(mc>0){
+    const mr=P.moonR.v,ms=P.moonSz.v;
+    const inc=P.moonInc.v*M.PI/180,si=M.sin(inc),ci=M.cos(inc);
+    for(let i=0;i<mc;i++){
+      const th=ts*P.moonSpd.v+6.283*i/mc;
+      const mx2=mr*M.cos(th),ys=mr*M.sin(th);
+      const mv=[mx2,-ys*si,ys*ci];
+      (mv[0]*pos[0]+mv[1]*pos[1]+mv[2]*pos[2]<0?back:front).push(mv);
+    }
+    // back moons: draw between disk and dots — visible through dot gaps
+    if(back.length){
+      q.shadowColor='#99bbff';q.shadowBlur=18;q.fillStyle='#ddeeff';
+      q.beginPath();
+      for(const mv of back){const p=pr(mv);if(!p)continue;q.moveTo(p[0]+ms,p[1]);q.arc(p[0],p[1],ms,0,6.283);}
+      q.globalAlpha=P.moonBr.v;q.fill();q.globalAlpha=1;
+    }
+  }
+
   const dot=P.dot.v;
   for(const s of shells){
     q.fillStyle=s.color;q.shadowColor=s.glow;q.shadowBlur=8;
@@ -171,42 +200,12 @@ requestAnimationFrame(function L(ts){
       for(const v of ring){const p=pr(v);if(!p)continue;q.moveTo(p[0]+dot,p[1]);q.arc(p[0],p[1],dot,0,6.283)}
     q.fill();
   }
-  const mc=P.moons.v;
+
   if(mc>0){
-    const mr=P.moonR.v,ms=P.moonSz.v;
-    const inc=P.moonInc.v*M.PI/180,si=M.sin(inc),ci=M.cos(inc);
-    // screen-space planet radius for holdout mask
-    const pR=P.r0.v+2*P.gap.v;
-    const scrPR=W*P.fl.v*pR/M.sqrt(d*d-pR*pR);
-    const feather=ms+6; // soft edge width in px
-    // split moons: dot(moonPos, camPos) < 0 means moon is on far side of planet
-    const front=[],back=[];
-    for(let i=0;i<mc;i++){
-      const th=ts*P.moonSpd.v+6.283*i/mc;
-      const mx2=mr*M.cos(th),ys=mr*M.sin(th);
-      const mv=[mx2,-ys*si,ys*ci];
-      (mv[0]*pos[0]+mv[1]*pos[1]+mv[2]*pos[2]<0?back:front).push(mv);
-    }
-    q.shadowColor='#99bbff';q.shadowBlur=18;
-    // back moons: render to offscreen canvas then apply planet holdout
-    if(back.length){
-      if(oc.width!==W){oc.width=oc.height=W;}else{oq.clearRect(0,0,W,W);}
-      oq.shadowColor='#99bbff';oq.shadowBlur=18;
-      oq.fillStyle='#ddeeff';
-      oq.beginPath();
-      for(const mv of back){const p=pr(mv);if(!p)continue;oq.moveTo(p[0]+ms,p[1]);oq.arc(p[0],p[1],ms,0,6.283);}
-      oq.fill();
-      const grad=oq.createRadialGradient(cx,cx,M.max(0,scrPR-feather),cx,cx,scrPR+feather);
-      grad.addColorStop(0,'rgba(0,0,0,1)');
-      grad.addColorStop(1,'rgba(0,0,0,0)');
-      oq.globalCompositeOperation='destination-out';
-      oq.fillStyle=grad;oq.fillRect(0,0,W,W);
-      oq.globalCompositeOperation='source-over';
-      q.globalAlpha=P.moonBr.v;q.drawImage(oc,0,0);q.globalAlpha=1;
-    }
-    // front moons: draw directly on main canvas
+    const ms=P.moonSz.v;
+    // front moons: draw on top of everything
     if(front.length){
-      q.fillStyle='#ddeeff';
+      q.shadowColor='#99bbff';q.shadowBlur=18;q.fillStyle='#ddeeff';
       q.beginPath();
       for(const mv of front){const p=pr(mv);if(!p)continue;q.moveTo(p[0]+ms,p[1]);q.arc(p[0],p[1],ms,0,6.283);}
       q.globalAlpha=P.moonBr.v;q.fill();q.globalAlpha=1;
