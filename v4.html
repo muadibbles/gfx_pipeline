@@ -179,31 +179,38 @@ requestAnimationFrame(function L(ts){
     const pR=P.r0.v+2*P.gap.v;
     const scrPR=W*P.fl.v*pR/M.sqrt(d*d-pR*pR);
     const feather=ms+6; // soft edge width in px
-    // render moons to offscreen canvas
-    if(oc.width!==W){oc.width=oc.height=W;}else{oq.clearRect(0,0,W,W);}
-    oq.shadowColor='#99bbff';oq.shadowBlur=18;
-    oq.fillStyle='#ddeeff';
-    oq.beginPath();
+    // split moons: dot(moonPos, camPos) < 0 means moon is on far side of planet
+    const front=[],back=[];
     for(let i=0;i<mc;i++){
       const th=ts*P.moonSpd.v+6.283*i/mc;
       const mx2=mr*M.cos(th),ys=mr*M.sin(th);
-      const p=pr([mx2,-ys*si,ys*ci]);
-      if(!p)continue;
-      oq.moveTo(p[0]+ms,p[1]);oq.arc(p[0],p[1],ms,0,6.283);
+      const mv=[mx2,-ys*si,ys*ci];
+      (mv[0]*pos[0]+mv[1]*pos[1]+mv[2]*pos[2]<0?back:front).push(mv);
     }
-    oq.fill();
-    // punch out planet area with soft radial gradient holdout
-    const grad=oq.createRadialGradient(cx,cx,M.max(0,scrPR-feather),cx,cx,scrPR+feather);
-    grad.addColorStop(0,'rgba(0,0,0,1)');
-    grad.addColorStop(1,'rgba(0,0,0,0)');
-    oq.globalCompositeOperation='destination-out';
-    oq.fillStyle=grad;
-    oq.fillRect(0,0,W,W);
-    oq.globalCompositeOperation='source-over';
-    // composite moons onto main canvas at brightness
-    q.globalAlpha=P.moonBr.v;
-    q.drawImage(oc,0,0);
-    q.globalAlpha=1;
+    q.shadowColor='#99bbff';q.shadowBlur=18;
+    // back moons: render to offscreen canvas then apply planet holdout
+    if(back.length){
+      if(oc.width!==W){oc.width=oc.height=W;}else{oq.clearRect(0,0,W,W);}
+      oq.shadowColor='#99bbff';oq.shadowBlur=18;
+      oq.fillStyle='#ddeeff';
+      oq.beginPath();
+      for(const mv of back){const p=pr(mv);if(!p)continue;oq.moveTo(p[0]+ms,p[1]);oq.arc(p[0],p[1],ms,0,6.283);}
+      oq.fill();
+      const grad=oq.createRadialGradient(cx,cx,M.max(0,scrPR-feather),cx,cx,scrPR+feather);
+      grad.addColorStop(0,'rgba(0,0,0,1)');
+      grad.addColorStop(1,'rgba(0,0,0,0)');
+      oq.globalCompositeOperation='destination-out';
+      oq.fillStyle=grad;oq.fillRect(0,0,W,W);
+      oq.globalCompositeOperation='source-over';
+      q.globalAlpha=P.moonBr.v;q.drawImage(oc,0,0);q.globalAlpha=1;
+    }
+    // front moons: draw directly on main canvas
+    if(front.length){
+      q.fillStyle='#ddeeff';
+      q.beginPath();
+      for(const mv of front){const p=pr(mv);if(!p)continue;q.moveTo(p[0]+ms,p[1]);q.arc(p[0],p[1],ms,0,6.283);}
+      q.globalAlpha=P.moonBr.v;q.fill();q.globalAlpha=1;
+    }
   }
   q.shadowBlur=0;
   requestAnimationFrame(L);
