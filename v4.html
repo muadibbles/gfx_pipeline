@@ -97,6 +97,7 @@ const P={
   moonSpd:{v:.0008,min:0,  max:.003,label:'moon speed', step:.0001},
   moonBr: {v:1,    min:0,   max:1,   label:'moon brightness',step:.01},
   moonSpread:{v:40, min:0,  max:180, label:'incline spread'},
+  moonRVar:  {v:.4,  min:0,   max:1,   label:'moon orbit var', step:.01},
   moonSzVar: {v:.5,  min:0,   max:1,   label:'moon size var', step:.01},
   orbitDots:{v:80,  min:10,  max:300, label:'orbit dots', int:true},
 };
@@ -191,9 +192,10 @@ requestAnimationFrame(function L(ts){
   // precompute per-moon orbital planes and colors
   const moonData=[];
   if(mc>0){
-    const mr=P.moonR.v;
+    const baseMr=P.moonR.v;
     const baseInc=P.moonInc.v*M.PI/180,spread=P.moonSpread.v*M.PI/180;
     for(let i=0;i<mc;i++){
+      const mr=M.max(10,baseMr*(1+P.moonRVar.v*M.sin(i*PHI*2.1+0.7)));
       const ms=M.max(.5,P.moonSz.v*(1+P.moonSzVar.v*M.sin(i*PHI*1.7+3.1)));
       const hue=(i*360/mc)|0;
       const color=`hsl(${hue},80%,65%)`;
