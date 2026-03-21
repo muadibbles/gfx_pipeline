@@ -12,6 +12,13 @@
   </div>
   <div id=starSliders></div>
   <div style="border-top:1px solid #333;margin:8px 0"></div>
+  <div style="margin-bottom:4px">
+    <label style="display:flex;gap:6px;align-items:center;cursor:pointer">
+      <input type=checkbox id=orbitToggle checked style="accent-color:#4488ff;width:14px;height:14px">
+      <span style="color:#aaa">orbit lines</span>
+    </label>
+  </div>
+  <div style="border-top:1px solid #333;margin:8px 0"></div>
 </div>
 
 <script>
@@ -22,6 +29,7 @@ const lsGet=(k,fb)=>{const v=localStorage.getItem('gfx_'+k);return v===null?fb:v
 const lsSet=(k,v)=>localStorage.setItem('gfx_'+k,v);
 
 let showStars=lsGet('showStars','true')==='true';
+let showOrbit=lsGet('showOrbit','true')==='true';
 
 // three star layers: far (dim), mid, near (bright)
 const starLayers=[
@@ -39,6 +47,10 @@ starLayers.forEach((L,i)=>{
 const starToggleEl=document.getElementById('starToggle');
 starToggleEl.checked=showStars;
 starToggleEl.onchange=e=>{showStars=e.target.checked;lsSet('showStars',showStars);document.getElementById('starSliders').style.opacity=showStars?1:.4};
+
+const orbitToggleEl=document.getElementById('orbitToggle');
+orbitToggleEl.checked=showOrbit;
+orbitToggleEl.onchange=e=>{showOrbit=e.target.checked;lsSet('showOrbit',showOrbit)};
 
 // star layer sliders (brightness + count per layer)
 const starDiv=document.getElementById('starSliders');
@@ -78,6 +90,7 @@ const P={
   moonSpd:{v:.0008,min:0,  max:.003,label:'moon speed', step:.0001},
   moonBr: {v:1,    min:0,   max:1,   label:'moon brightness',step:.01},
   moonSpread:{v:40, min:0,  max:180, label:'incline spread'},
+  orbitDots:{v:80,  min:10,  max:300, label:'orbit dots', int:true},
 };
 for(const [k,d] of Object.entries(P))d.v=d.int?parseInt(lsGet('p_'+k,d.v)):parseFloat(lsGet('p_'+k,d.v));
 
@@ -165,32 +178,51 @@ requestAnimationFrame(function L(ts){
   }
 
   const mc=P.moons.v;
-  let front=[],back=[];
+  const PHI=2.39996;
+  // precompute per-moon orbital planes and colors
+  const moonData=[];
   if(mc>0){
     const mr=P.moonR.v,ms=P.moonSz.v;
     const baseInc=P.moonInc.v*M.PI/180,spread=P.moonSpread.v*M.PI/180;
-    const PHI=2.39996; // golden angle — spaces ascending nodes evenly
     for(let i=0;i<mc;i++){
-      const th=ts*P.moonSpd.v+6.283*i/mc;
-      // each moon gets its own orbital plane: inclination + ascending node
-      const inc=baseInc+spread*M.sin(i*PHI+1.0);  // inclination scatter
-      const node=i*PHI;                            // ascending node (Ω)
+      const hue=(i*360/mc)|0;
+      const color=`hsl(${hue},80%,65%)`;
+      const inc=baseInc+spread*M.sin(i*PHI+1.0);
+      const node=i*PHI;
       const si=M.sin(inc),ci=M.cos(inc),sn=M.sin(node),cn=M.cos(node);
+      const th=ts*P.moonSpd.v+6.283*i/mc;
       const ct=M.cos(th),st=M.sin(th);
-      const mv=[
-        mr*(cn*ct - sn*ci*st),
-        mr*(si*st),
-        mr*(sn*ct + cn*ci*st),
-      ];
-      (mv[0]*pos[0]+mv[1]*pos[1]+mv[2]*pos[2]<0?back:front).push(mv);
+      const mv=[mr*(cn*ct-sn*ci*st), mr*(si*st), mr*(sn*ct+cn*ci*st)];
+      const behind=mv[0]*pos[0]+mv[1]*pos[1]+mv[2]*pos[2]<0;
+      moonData.push({mv,color,behind,i,inc,si,ci,sn,cn,mr,ms});
     }
-    // back moons: draw before dots — visible through dot gaps
-    if(back.length){
-      q.shadowColor='#99bbff';q.shadowBlur=18;q.fillStyle='#ddeeff';
-      q.beginPath();
-      for(const mv of back){const p=pr(mv);if(!p)continue;q.moveTo(p[0]+ms,p[1]);q.arc(p[0],p[1],ms,0,6.283);}
-      q.globalAlpha=P.moonBr.v;q.fill();q.globalAlpha=1;
+  }
+
+  // orbit lines + back moons — drawn before planet dots (visible through gaps)
+  if(mc>0){
+    const od=P.orbitDots.v;
+    q.globalAlpha=P.moonBr.v;
+    for(const m of moonData){
+      // orbit line
+      if(showOrbit){
+        q.shadowColor=m.color;q.shadowBlur=4;q.fillStyle=m.color;
+        q.beginPath();
+        for(let j=0;j<od;j++){
+          const t=j/od*6.283,ct2=M.cos(t),st2=M.sin(t);
+          const ov=[m.mr*(m.cn*ct2-m.sn*m.ci*st2), m.mr*(m.si*st2), m.mr*(m.sn*ct2+m.cn*m.ci*st2)];
+          const p=pr(ov);if(!p)continue;
+          q.moveTo(p[0]+1.5,p[1]);q.arc(p[0],p[1],1.5,0,6.283);
+        }
+        q.fill();
+      }
+      // back moon body
+      if(m.behind){
+        const p=pr(m.mv);if(!p)continue;
+        q.shadowColor=m.color;q.shadowBlur=18;q.fillStyle=m.color;
+        q.beginPath();q.arc(p[0],p[1],m.ms,0,6.283);q.fill();
+      }
     }
+    q.globalAlpha=1;
   }
 
   const dot=P.dot.v;
@@ -202,15 +234,16 @@ requestAnimationFrame(function L(ts){
     q.fill();
   }
 
+  // front moons — drawn after planet dots
   if(mc>0){
-    const ms=P.moonSz.v;
-    // front moons: draw on top of everything
-    if(front.length){
-      q.shadowColor='#99bbff';q.shadowBlur=18;q.fillStyle='#ddeeff';
-      q.beginPath();
-      for(const mv of front){const p=pr(mv);if(!p)continue;q.moveTo(p[0]+ms,p[1]);q.arc(p[0],p[1],ms,0,6.283);}
-      q.globalAlpha=P.moonBr.v;q.fill();q.globalAlpha=1;
+    q.globalAlpha=P.moonBr.v;
+    for(const m of moonData){
+      if(m.behind)continue;
+      const p=pr(m.mv);if(!p)continue;
+      q.shadowColor=m.color;q.shadowBlur=18;q.fillStyle=m.color;
+      q.beginPath();q.arc(p[0],p[1],m.ms,0,6.283);q.fill();
     }
+    q.globalAlpha=1;
   }
   q.shadowBlur=0;
   requestAnimationFrame(L);
