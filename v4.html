@@ -72,7 +72,7 @@ const P={
   tilt:  {v:39,   min:0,   max:90,  label:'tilt (deg)'},
   speed: {v:.0003,min:0,   max:.001,label:'speed',      step:.00005},
   moons: {v:3,    min:0,   max:8,   label:'moon count', int:true},
-  moonSz:{v:4,    min:1,   max:14,  label:'moon size',  step:.5},
+  moonSz:{v:4,    min:1,   max:50,  label:'moon size',  step:.5},
   moonR: {v:320,  min:150, max:700, label:'moon orbit r'},
   moonInc:{v:45,  min:0,   max:180, label:'moon incline'},
   moonSpd:{v:.0008,min:0,  max:.003,label:'moon speed', step:.0001},
@@ -172,12 +172,26 @@ requestAnimationFrame(function L(ts){
   if(mc>0){
     const mr=P.moonR.v,ms=P.moonSz.v;
     const inc=P.moonInc.v*M.PI/180,si=M.sin(inc),ci=M.cos(inc);
+    const pR=P.r0.v+2*P.gap.v; // planet occlusion radius (outermost shell)
+    // ray-sphere: is segment cam->moonPos blocked by planet sphere (center=origin, r=pR)?
+    const blocked=mv=>{
+      const dx=mv[0]-pos[0],dy=mv[1]-pos[1],dz=mv[2]-pos[2];
+      const b=2*(pos[0]*dx+pos[1]*dy+pos[2]*dz);
+      const c2=pos[0]*pos[0]+pos[1]*pos[1]+pos[2]*pos[2]-pR*pR;
+      const disc=b*b-4*(dx*dx+dy*dy+dz*dz)*c2;
+      if(disc<0)return false;
+      const sq=M.sqrt(disc),a2=2*(dx*dx+dy*dy+dz*dz);
+      const t1=(-b-sq)/a2,t2=(-b+sq)/a2;
+      return t2>1e-3&&t1<1;
+    };
     q.fillStyle='#ddeeff';q.shadowColor='#99bbff';q.shadowBlur=18;
     q.beginPath();
     for(let i=0;i<mc;i++){
       const th=ts*P.moonSpd.v+6.283*i/mc;
       const mx2=mr*M.cos(th),ys=mr*M.sin(th);
-      const p=pr([mx2,-ys*si,ys*ci]);
+      const mv=[mx2,-ys*si,ys*ci];
+      if(blocked(mv))continue;
+      const p=pr(mv);
       if(!p)continue;
       q.moveTo(p[0]+ms,p[1]);q.arc(p[0],p[1],ms,0,6.283);
     }
