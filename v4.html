@@ -19,6 +19,13 @@
     </label>
   </div>
   <div style="border-top:1px solid #333;margin:8px 0"></div>
+  <div style="margin-bottom:4px">
+    <label style="display:flex;gap:6px;align-items:center;cursor:pointer">
+      <input type=checkbox id=camLock style="accent-color:#4488ff;width:14px;height:14px">
+      <span style="color:#aaa">lock camera</span>
+    </label>
+  </div>
+  <div style="border-top:1px solid #333;margin:8px 0"></div>
 </div>
 
 <script>
@@ -156,7 +163,7 @@ const nl=v=>{const l=M.hypot(...v);return l<1e-9?[0,1,0]:v.map(x=>x/l)};
 const oc=document.createElement('canvas');const oq=oc.getContext('2d');
 
 requestAnimationFrame(function L(ts){
-  if(!drag)az+=P.speed.v*(ts-prev);
+  if(!drag&&!camLock.checked)az+=P.speed.v*(ts-prev);
   prev=ts;
   const E=.3*M.sin(ts*.00028)+el,ce=M.cos(E),se=M.sin(E);
   const d=P.cam.v;
