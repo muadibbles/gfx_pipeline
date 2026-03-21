@@ -4,12 +4,14 @@
 
 <div id=panel style="position:fixed;top:12px;right:12px;background:rgba(0,0,0,.75);border:1px solid #333;border-radius:8px;padding:14px 16px;color:#ccc;font:12px/1.8 monospace;min-width:220px;user-select:none">
   <div style="color:#fff;font-size:13px;margin-bottom:8px;letter-spacing:.05em">CONTROLS</div>
-  <div style="margin-bottom:8px">
+  <div style="margin-bottom:4px">
     <label style="display:flex;gap:6px;align-items:center;cursor:pointer">
       <input type=checkbox id=starToggle checked style="accent-color:#4488ff;width:14px;height:14px">
       <span style="color:#aaa">star field</span>
     </label>
   </div>
+  <div id=starSliders></div>
+  <div style="border-top:1px solid #333;margin:8px 0"></div>
 </div>
 
 <script>
@@ -17,9 +19,30 @@ const M=Math,q=c.getContext('2d');
 let az=0,el=0,drag=0,daz=0,mx=0,my=0,de=0,prev=0,W;
 let showStars=true;
 
-// generate star field: random points on a large sphere
-const STAR_COUNT=400;
-const stars=(()=>{const a=[];for(let i=0;i<STAR_COUNT;i++){const th=M.random()*6.283,ph=M.acos(2*M.random()-1);const r=2200+M.random()*800;const sz=.5+M.random()*1.2;a.push([r*M.sin(ph)*M.cos(th),r*M.sin(ph)*M.sin(th),r*M.cos(ph),sz]);}return a;})();
+// three star layers: far (dim), mid, near (bright)
+const starLayers=[
+  {rMin:5000,rMax:7000,count:600,szMin:.3,szMax:.6, opacity:.15, label:'stars far'},
+  {rMin:3000,rMax:4500,count:500,szMin:.4,szMax:.9, opacity:.45, label:'stars mid'},
+  {rMin:1800,rMax:2500,count:400,szMin:.5,szMax:1.7,opacity:.8,  label:'stars near'},
+];
+starLayers.forEach(L=>{
+  L.pts=(()=>{const a=[];for(let i=0;i<L.count;i++){const th=M.random()*6.283,ph=M.acos(2*M.random()-1);const r=L.rMin+M.random()*(L.rMax-L.rMin);const sz=L.szMin+M.random()*(L.szMax-L.szMin);a.push([r*M.sin(ph)*M.cos(th),r*M.sin(ph)*M.sin(th),r*M.cos(ph),sz]);}return a;})();
+});
+
+document.getElementById('starToggle').onchange=e=>{showStars=e.target.checked;document.getElementById('starSliders').style.opacity=showStars?1:.4};
+
+// star layer sliders
+const starDiv=document.getElementById('starSliders');
+starLayers.forEach((L,i)=>{
+  const row=document.createElement('div');
+  row.innerHTML=`<label style="display:flex;gap:6px;align-items:center">
+    <span style="width:110px;color:#aaa">${L.label}</span>
+    <input type=range min=0 max=1 step=.01 value=${L.opacity} style="flex:1;accent-color:#4488ff">
+    <span id=slbl_${i} style="width:38px;text-align:right;color:#fff">${L.opacity}</span>
+  </label>`;
+  starDiv.appendChild(row);
+  row.querySelector('input').oninput=e=>{L.opacity=parseFloat(e.target.value);document.getElementById('slbl_'+i).textContent=L.opacity.toFixed(2)};
+});
 
 // live params
 const P={
@@ -33,8 +56,6 @@ const P={
   tilt:  {v:39,   min:0,   max:90,  label:'tilt (deg)'},
   speed: {v:.0003,min:0,   max:.001,label:'speed',      step:.00005},
 };
-
-document.getElementById('starToggle').onchange=e=>showStars=e.target.checked;
 
 // build sliders
 const panel=document.getElementById('panel');
@@ -106,10 +127,14 @@ requestAnimationFrame(function L(ts){
   q.fillStyle='#000';q.fillRect(0,0,W,W);
 
   if(showStars){
-    q.fillStyle='rgba(255,255,255,0.8)';q.shadowBlur=0;
-    q.beginPath();
-    for(const v of stars){const p=pr(v);if(!p)continue;q.moveTo(p[0]+v[3],p[1]);q.arc(p[0],p[1],v[3],0,6.283);}
-    q.fill();
+    q.shadowBlur=0;
+    for(const layer of starLayers){
+      if(layer.opacity===0)continue;
+      q.fillStyle=`rgba(255,255,255,${layer.opacity})`;
+      q.beginPath();
+      for(const v of layer.pts){const p=pr(v);if(!p)continue;q.moveTo(p[0]+v[3],p[1]);q.arc(p[0],p[1],v[3],0,6.283);}
+      q.fill();
+    }
   }
 
   const dot=P.dot.v;
