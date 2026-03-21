@@ -25,23 +25,29 @@ const starLayers=[
   {rMin:3000,rMax:4500,count:500,szMin:.4,szMax:.9, opacity:.45, label:'stars mid'},
   {rMin:1800,rMax:2500,count:400,szMin:.5,szMax:1.7,opacity:.8,  label:'stars near'},
 ];
-starLayers.forEach(L=>{
-  L.pts=(()=>{const a=[];for(let i=0;i<L.count;i++){const th=M.random()*6.283,ph=M.acos(2*M.random()-1);const r=L.rMin+M.random()*(L.rMax-L.rMin);const sz=L.szMin+M.random()*(L.szMax-L.szMin);a.push([r*M.sin(ph)*M.cos(th),r*M.sin(ph)*M.sin(th),r*M.cos(ph),sz]);}return a;})();
-});
+function genLayer(L){const a=[];for(let i=0;i<L.count;i++){const th=M.random()*6.283,ph=M.acos(2*M.random()-1);const r=L.rMin+M.random()*(L.rMax-L.rMin);const sz=L.szMin+M.random()*(L.szMax-L.szMin);a.push([r*M.sin(ph)*M.cos(th),r*M.sin(ph)*M.sin(th),r*M.cos(ph),sz]);}return a;}
+starLayers.forEach(L=>L.pts=genLayer(L));
 
 document.getElementById('starToggle').onchange=e=>{showStars=e.target.checked;document.getElementById('starSliders').style.opacity=showStars?1:.4};
 
-// star layer sliders
+// star layer sliders (brightness + count per layer)
 const starDiv=document.getElementById('starSliders');
 starLayers.forEach((L,i)=>{
-  const row=document.createElement('div');
-  row.innerHTML=`<label style="display:flex;gap:6px;align-items:center">
-    <span style="width:110px;color:#aaa">${L.label}</span>
-    <input type=range min=0 max=1 step=.01 value=${L.opacity} style="flex:1;accent-color:#4488ff">
-    <span id=slbl_${i} style="width:38px;text-align:right;color:#fff">${L.opacity}</span>
+  const d=document.createElement('div');
+  d.innerHTML=`
+  <label style="display:flex;gap:6px;align-items:center">
+    <span style="width:110px;color:#aaa">${L.label} bright</span>
+    <input id=sbr_${i} type=range min=0 max=1 step=.01 value=${L.opacity} style="flex:1;accent-color:#4488ff">
+    <span id=sbrL_${i} style="width:38px;text-align:right;color:#fff">${L.opacity}</span>
+  </label>
+  <label style="display:flex;gap:6px;align-items:center">
+    <span style="width:110px;color:#aaa">${L.label} count</span>
+    <input id=scnt_${i} type=range min=0 max=1500 step=10 value=${L.count} style="flex:1;accent-color:#4488ff">
+    <span id=scntL_${i} style="width:38px;text-align:right;color:#fff">${L.count}</span>
   </label>`;
-  starDiv.appendChild(row);
-  row.querySelector('input').oninput=e=>{L.opacity=parseFloat(e.target.value);document.getElementById('slbl_'+i).textContent=L.opacity.toFixed(2)};
+  starDiv.appendChild(d);
+  d.querySelector('#sbr_'+i).oninput=e=>{L.opacity=parseFloat(e.target.value);document.getElementById('sbrL_'+i).textContent=L.opacity.toFixed(2)};
+  d.querySelector('#scnt_'+i).oninput=e=>{L.count=parseInt(e.target.value);document.getElementById('scntL_'+i).textContent=L.count;L.pts=genLayer(L)};
 });
 
 // live params
