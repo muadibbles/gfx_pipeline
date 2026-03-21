@@ -77,6 +77,7 @@ const P={
   moonInc:{v:45,  min:0,   max:180, label:'moon incline'},
   moonSpd:{v:.0008,min:0,  max:.003,label:'moon speed', step:.0001},
   moonBr: {v:1,    min:0,   max:1,   label:'moon brightness',step:.01},
+  moonSpread:{v:40, min:0,  max:180, label:'incline spread'},
 };
 for(const [k,d] of Object.entries(P))d.v=d.int?parseInt(lsGet('p_'+k,d.v)):parseFloat(lsGet('p_'+k,d.v));
 
@@ -167,11 +168,20 @@ requestAnimationFrame(function L(ts){
   let front=[],back=[];
   if(mc>0){
     const mr=P.moonR.v,ms=P.moonSz.v;
-    const inc=P.moonInc.v*M.PI/180,si=M.sin(inc),ci=M.cos(inc);
+    const baseInc=P.moonInc.v*M.PI/180,spread=P.moonSpread.v*M.PI/180;
+    const PHI=2.39996; // golden angle — spaces ascending nodes evenly
     for(let i=0;i<mc;i++){
       const th=ts*P.moonSpd.v+6.283*i/mc;
-      const mx2=mr*M.cos(th),ys=mr*M.sin(th);
-      const mv=[mx2,-ys*si,ys*ci];
+      // each moon gets its own orbital plane: inclination + ascending node
+      const inc=baseInc+spread*M.sin(i*PHI+1.0);  // inclination scatter
+      const node=i*PHI;                            // ascending node (Ω)
+      const si=M.sin(inc),ci=M.cos(inc),sn=M.sin(node),cn=M.cos(node);
+      const ct=M.cos(th),st=M.sin(th);
+      const mv=[
+        mr*(cn*ct - sn*ci*st),
+        mr*(si*st),
+        mr*(sn*ct + cn*ci*st),
+      ];
       (mv[0]*pos[0]+mv[1]*pos[1]+mv[2]*pos[2]<0?back:front).push(mv);
     }
     // back moons: draw before dots — visible through dot gaps
