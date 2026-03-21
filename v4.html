@@ -71,6 +71,11 @@ const P={
   dot:   {v:1.5,  min:.5,  max:5,   label:'dot size',   step:.1},
   tilt:  {v:39,   min:0,   max:90,  label:'tilt (deg)'},
   speed: {v:.0003,min:0,   max:.001,label:'speed',      step:.00005},
+  moons: {v:3,    min:0,   max:8,   label:'moon count', int:true},
+  moonSz:{v:4,    min:1,   max:14,  label:'moon size',  step:.5},
+  moonR: {v:320,  min:150, max:700, label:'moon orbit r'},
+  moonInc:{v:45,  min:0,   max:180, label:'moon incline'},
+  moonSpd:{v:.0008,min:0,  max:.003,label:'moon speed', step:.0001},
 };
 for(const [k,d] of Object.entries(P))d.v=d.int?parseInt(lsGet('p_'+k,d.v)):parseFloat(lsGet('p_'+k,d.v));
 
@@ -161,6 +166,21 @@ requestAnimationFrame(function L(ts){
     q.beginPath();
     for(const ring of s.rings)
       for(const v of ring){const p=pr(v);if(!p)continue;q.moveTo(p[0]+dot,p[1]);q.arc(p[0],p[1],dot,0,6.283)}
+    q.fill();
+  }
+  const mc=P.moons.v;
+  if(mc>0){
+    const mr=P.moonR.v,ms=P.moonSz.v;
+    const inc=P.moonInc.v*M.PI/180,si=M.sin(inc),ci=M.cos(inc);
+    q.fillStyle='#ddeeff';q.shadowColor='#99bbff';q.shadowBlur=18;
+    q.beginPath();
+    for(let i=0;i<mc;i++){
+      const th=ts*P.moonSpd.v+6.283*i/mc;
+      const mx2=mr*M.cos(th),ys=mr*M.sin(th);
+      const p=pr([mx2,-ys*si,ys*ci]);
+      if(!p)continue;
+      q.moveTo(p[0]+ms,p[1]);q.arc(p[0],p[1],ms,0,6.283);
+    }
     q.fill();
   }
   q.shadowBlur=0;
