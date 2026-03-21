@@ -4,11 +4,22 @@
 
 <div id=panel style="position:fixed;top:12px;right:12px;background:rgba(0,0,0,.75);border:1px solid #333;border-radius:8px;padding:14px 16px;color:#ccc;font:12px/1.8 monospace;min-width:220px;user-select:none">
   <div style="color:#fff;font-size:13px;margin-bottom:8px;letter-spacing:.05em">CONTROLS</div>
+  <div style="margin-bottom:8px">
+    <label style="display:flex;gap:6px;align-items:center;cursor:pointer">
+      <input type=checkbox id=starToggle checked style="accent-color:#4488ff;width:14px;height:14px">
+      <span style="color:#aaa">star field</span>
+    </label>
+  </div>
 </div>
 
 <script>
 const M=Math,q=c.getContext('2d');
 let az=0,el=0,drag=0,daz=0,mx=0,my=0,de=0,prev=0,W;
+let showStars=true;
+
+// generate star field: random points on a large sphere
+const STAR_COUNT=400;
+const stars=(()=>{const a=[];for(let i=0;i<STAR_COUNT;i++){const th=M.random()*6.283,ph=M.acos(2*M.random()-1);const r=2200+M.random()*800;const sz=.5+M.random()*1.2;a.push([r*M.sin(ph)*M.cos(th),r*M.sin(ph)*M.sin(th),r*M.cos(ph),sz]);}return a;})();
 
 // live params
 const P={
@@ -22,6 +33,8 @@ const P={
   tilt:  {v:39,   min:0,   max:90,  label:'tilt (deg)'},
   speed: {v:.0003,min:0,   max:.001,label:'speed',      step:.00005},
 };
+
+document.getElementById('starToggle').onchange=e=>showStars=e.target.checked;
 
 // build sliders
 const panel=document.getElementById('panel');
@@ -91,6 +104,14 @@ requestAnimationFrame(function L(ts){
   const pr=v=>{const dv=sb(v,pos),xc=f(dv,rgt),yc=f(dv,up),zc=f(dv,fwd);return zc<.5?null:[cx+FL*xc/zc,cx-FL*yc/zc]};
 
   q.fillStyle='#000';q.fillRect(0,0,W,W);
+
+  if(showStars){
+    q.fillStyle='rgba(255,255,255,0.8)';q.shadowBlur=0;
+    q.beginPath();
+    for(const v of stars){const p=pr(v);if(!p)continue;q.moveTo(p[0]+v[3],p[1]);q.arc(p[0],p[1],v[3],0,6.283);}
+    q.fill();
+  }
+
   const dot=P.dot.v;
   for(const s of shells){
     q.fillStyle=s.color;q.shadowColor=s.glow;q.shadowBlur=8;
