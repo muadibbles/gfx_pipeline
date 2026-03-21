@@ -76,6 +76,7 @@ const P={
   moonR: {v:320,  min:150, max:700, label:'moon orbit r'},
   moonInc:{v:45,  min:0,   max:180, label:'moon incline'},
   moonSpd:{v:.0008,min:0,  max:.003,label:'moon speed', step:.0001},
+  moonBr: {v:1,    min:0,   max:1,   label:'moon brightness',step:.01},
 };
 for(const [k,d] of Object.entries(P))d.v=d.int?parseInt(lsGet('p_'+k,d.v)):parseFloat(lsGet('p_'+k,d.v));
 
@@ -137,6 +138,8 @@ const cr=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
 const sb=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
 const nl=v=>{const l=M.hypot(...v);return l<1e-9?[0,1,0]:v.map(x=>x/l)};
 
+const oc=document.createElement('canvas');const oq=oc.getContext('2d');
+
 requestAnimationFrame(function L(ts){
   if(!drag)az+=P.speed.v*(ts-prev);
   prev=ts;
@@ -172,30 +175,35 @@ requestAnimationFrame(function L(ts){
   if(mc>0){
     const mr=P.moonR.v,ms=P.moonSz.v;
     const inc=P.moonInc.v*M.PI/180,si=M.sin(inc),ci=M.cos(inc);
-    const pR=P.r0.v+2*P.gap.v; // planet occlusion radius (outermost shell)
-    // ray-sphere: is segment cam->moonPos blocked by planet sphere (center=origin, r=pR)?
-    const blocked=mv=>{
-      const dx=mv[0]-pos[0],dy=mv[1]-pos[1],dz=mv[2]-pos[2];
-      const b=2*(pos[0]*dx+pos[1]*dy+pos[2]*dz);
-      const c2=pos[0]*pos[0]+pos[1]*pos[1]+pos[2]*pos[2]-pR*pR;
-      const disc=b*b-4*(dx*dx+dy*dy+dz*dz)*c2;
-      if(disc<0)return false;
-      const sq=M.sqrt(disc),a2=2*(dx*dx+dy*dy+dz*dz);
-      const t1=(-b-sq)/a2,t2=(-b+sq)/a2;
-      return t2>1e-3&&t1<1;
-    };
-    q.fillStyle='#ddeeff';q.shadowColor='#99bbff';q.shadowBlur=18;
-    q.beginPath();
+    // screen-space planet radius for holdout mask
+    const pR=P.r0.v+2*P.gap.v;
+    const scrPR=W*P.fl.v*pR/M.sqrt(d*d-pR*pR);
+    const feather=ms+6; // soft edge width in px
+    // render moons to offscreen canvas
+    if(oc.width!==W){oc.width=oc.height=W;}else{oq.clearRect(0,0,W,W);}
+    oq.shadowColor='#99bbff';oq.shadowBlur=18;
+    oq.fillStyle='#ddeeff';
+    oq.beginPath();
     for(let i=0;i<mc;i++){
       const th=ts*P.moonSpd.v+6.283*i/mc;
       const mx2=mr*M.cos(th),ys=mr*M.sin(th);
-      const mv=[mx2,-ys*si,ys*ci];
-      if(blocked(mv))continue;
-      const p=pr(mv);
+      const p=pr([mx2,-ys*si,ys*ci]);
       if(!p)continue;
-      q.moveTo(p[0]+ms,p[1]);q.arc(p[0],p[1],ms,0,6.283);
+      oq.moveTo(p[0]+ms,p[1]);oq.arc(p[0],p[1],ms,0,6.283);
     }
-    q.fill();
+    oq.fill();
+    // punch out planet area with soft radial gradient holdout
+    const grad=oq.createRadialGradient(cx,cx,M.max(0,scrPR-feather),cx,cx,scrPR+feather);
+    grad.addColorStop(0,'rgba(0,0,0,1)');
+    grad.addColorStop(1,'rgba(0,0,0,0)');
+    oq.globalCompositeOperation='destination-out';
+    oq.fillStyle=grad;
+    oq.fillRect(0,0,W,W);
+    oq.globalCompositeOperation='source-over';
+    // composite moons onto main canvas at brightness
+    q.globalAlpha=P.moonBr.v;
+    q.drawImage(oc,0,0);
+    q.globalAlpha=1;
   }
   q.shadowBlur=0;
   requestAnimationFrame(L);
