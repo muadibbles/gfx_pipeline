@@ -163,15 +163,6 @@ requestAnimationFrame(function L(ts){
     }
   }
 
-  // compute shared planet screen radius
-  const pR=P.r0.v+2*P.gap.v;
-  const scrPR=W*P.fl.v*pR/M.sqrt(d*d-pR*pR);
-
-  // solid black planet disk — blocks stars, acts as natural occluder
-  q.shadowBlur=0;
-  q.fillStyle='#000';
-  q.beginPath();q.arc(cx,cx,scrPR,0,6.283);q.fill();
-
   const mc=P.moons.v;
   let front=[],back=[];
   if(mc>0){
@@ -183,7 +174,7 @@ requestAnimationFrame(function L(ts){
       const mv=[mx2,-ys*si,ys*ci];
       (mv[0]*pos[0]+mv[1]*pos[1]+mv[2]*pos[2]<0?back:front).push(mv);
     }
-    // back moons: draw between disk and dots — visible through dot gaps
+    // back moons: draw before dots — visible through dot gaps
     if(back.length){
       q.shadowColor='#99bbff';q.shadowBlur=18;q.fillStyle='#ddeeff';
       q.beginPath();
