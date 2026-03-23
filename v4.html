@@ -63,9 +63,9 @@ let equatorialOrbits=lsGet('equatorialOrbits','false')==='true';
 
 // three star layers: far (dim), mid, near (bright)
 const starLayers=[
-  {rMin:5000,rMax:7000,count:600,szMin:.3,szMax:.6, opacity:.15, label:'stars far'},
-  {rMin:3000,rMax:4500,count:500,szMin:.4,szMax:.9, opacity:.45, label:'stars mid'},
-  {rMin:1800,rMax:2500,count:400,szMin:.5,szMax:1.7,opacity:.8,  label:'stars near'},
+  {rMin:20000,rMax:28000,count:600,szMin:.3,szMax:.6, opacity:.15, label:'stars far'},
+  {rMin:12000,rMax:18000,count:500,szMin:.4,szMax:.9, opacity:.45, label:'stars mid'},
+  {rMin: 8000,rMax:11000,count:400,szMin:.5,szMax:1.7,opacity:.8,  label:'stars near'},
 ];
 function genLayer(L){const a=[];for(let i=0;i<L.count;i++){const th=M.random()*6.283,ph=M.acos(2*M.random()-1);const r=L.rMin+M.random()*(L.rMax-L.rMin);const sz=L.szMin+M.random()*(L.szMax-L.szMin);a.push([r*M.sin(ph)*M.cos(th),r*M.sin(ph)*M.sin(th),r*M.cos(ph),sz]);}return a;}
 starLayers.forEach((L,i)=>{
