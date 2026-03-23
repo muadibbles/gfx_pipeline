@@ -108,8 +108,8 @@ starLayers.forEach((L,i)=>{
 
 // live params
 const P={
-  cam:   {v:570,  min:300, max:1800, label:'zoom (cam dist)'},
-  fl:    {v:.85,  min:.3,  max:1.5, label:'focal len',  step:.01},
+  cam:   {v:570,  min:300, max:3600, label:'zoom (cam dist)'},
+  fl:    {v:31,   min:14,  max:200, label:'focal len (mm)', step:1},
   r0:    {v:228,  min:100, max:400, label:'inner radius'},
   gap:   {v:10,   min:2,   max:60,  label:'shell gap'},
   N:     {v:20,   min:4,   max:40,  label:'rings',      int:true},
@@ -198,7 +198,7 @@ requestAnimationFrame(function L(ts){
   const d=P.cam.v;
   const pos=[d*M.sin(az)*ce,d*se,d*M.cos(az)*ce];
   const fwd=nl(pos.map(v=>-v)),rgt=nl(cr(fwd,[0,1,0])),up=nl(cr(rgt,fwd));
-  const FL=W*P.fl.v,cx=W/2;
+  const FL=W*P.fl.v/36,cx=W/2;
   const pr=v=>{const dv=sb(v,pos),xc=f(dv,rgt),yc=f(dv,up),zc=f(dv,fwd);return zc<.5?null:[cx+FL*xc/zc,cx-FL*yc/zc]};
 
   q.fillStyle='#000';q.fillRect(0,0,W,W);
