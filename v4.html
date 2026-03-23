@@ -3,7 +3,11 @@
 <canvas id=c style="touch-action:none;display:block"></canvas>
 
 <div id=panel style="position:fixed;top:12px;right:12px;background:rgba(0,0,0,.75);border:1px solid #333;border-radius:8px;padding:14px 16px;color:#ccc;font:12px/1.8 monospace;min-width:220px;user-select:none">
-  <div style="color:#fff;font-size:13px;margin-bottom:8px;letter-spacing:.05em">CONTROLS</div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <span style="color:#fff;font-size:13px;letter-spacing:.05em">CONTROLS</span>
+    <button id=collapseBtn onclick="togglePanel()" style="background:none;border:1px solid #555;border-radius:4px;color:#aaa;cursor:pointer;font:11px monospace;padding:1px 6px;line-height:1.4">▲</button>
+  </div>
+  <div id=panelBody>
   <div style="margin-bottom:4px">
     <label style="display:flex;gap:6px;align-items:center;cursor:pointer">
       <input type=checkbox id=starToggle checked style="accent-color:#4488ff;width:14px;height:14px">
@@ -18,6 +22,12 @@
       <span style="color:#aaa">orbit lines</span>
     </label>
   </div>
+  <div style="margin-bottom:4px">
+    <label style="display:flex;gap:6px;align-items:center;cursor:pointer">
+      <input type=checkbox id=equatorialToggle style="accent-color:#4488ff;width:14px;height:14px">
+      <span style="color:#aaa">equatorial orbits</span>
+    </label>
+  </div>
   <div style="border-top:1px solid #333;margin:8px 0"></div>
   <div style="margin-bottom:4px">
     <label style="display:flex;gap:6px;align-items:center;cursor:pointer">
@@ -26,7 +36,19 @@
     </label>
   </div>
   <div style="border-top:1px solid #333;margin:8px 0"></div>
+  </div><!-- /panelBody -->
 </div>
+
+<div style="position:fixed;bottom:8px;left:10px;color:#333;font:9px monospace;pointer-events:none">v4</div>
+
+<script>
+let panelCollapsed=false;
+function togglePanel(){
+  panelCollapsed=!panelCollapsed;
+  document.getElementById('panelBody').style.display=panelCollapsed?'none':'';
+  document.getElementById('collapseBtn').textContent=panelCollapsed?'▼':'▲';
+}
+</script>
 
 <script>
 const M=Math,q=c.getContext('2d');
@@ -37,6 +59,7 @@ const lsSet=(k,v)=>localStorage.setItem('gfx_'+k,v);
 
 let showStars=lsGet('showStars','true')==='true';
 let showOrbit=lsGet('showOrbit','true')==='true';
+let equatorialOrbits=lsGet('equatorialOrbits','false')==='true';
 
 // three star layers: far (dim), mid, near (bright)
 const starLayers=[
@@ -58,6 +81,10 @@ starToggleEl.onchange=e=>{showStars=e.target.checked;lsSet('showStars',showStars
 const orbitToggleEl=document.getElementById('orbitToggle');
 orbitToggleEl.checked=showOrbit;
 orbitToggleEl.onchange=e=>{showOrbit=e.target.checked;lsSet('showOrbit',showOrbit)};
+
+const equatorialToggleEl=document.getElementById('equatorialToggle');
+equatorialToggleEl.checked=equatorialOrbits;
+equatorialToggleEl.onchange=e=>{equatorialOrbits=e.target.checked;lsSet('equatorialOrbits',equatorialOrbits)};
 
 // star layer sliders (brightness + count per layer)
 const starDiv=document.getElementById('starSliders');
@@ -193,7 +220,7 @@ requestAnimationFrame(function L(ts){
   const moonData=[];
   if(mc>0){
     const baseMr=P.moonR.v;
-    const baseInc=P.moonInc.v*M.PI/180,spread=P.moonSpread.v*M.PI/180;
+    const baseInc=equatorialOrbits?0:P.moonInc.v*M.PI/180,spread=equatorialOrbits?0:P.moonSpread.v*M.PI/180;
     for(let i=0;i<mc;i++){
       const mr=M.max(10,baseMr*(1+P.moonRVar.v*M.sin(i*PHI*2.1+0.7)));
       const ms=M.max(.5,P.moonSz.v*(1+P.moonSzVar.v*M.sin(i*PHI*1.7+3.1)));
