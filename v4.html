@@ -39,7 +39,7 @@
   </div><!-- /panelBody -->
 </div>
 
-<div style="position:fixed;bottom:8px;left:10px;color:#333;font:9px monospace;pointer-events:none">v4</div>
+<div style="position:fixed;bottom:8px;left:10px;color:#333;font:18px monospace;pointer-events:none">v4</div>
 
 <script>
 let panelCollapsed=false;
@@ -131,7 +131,7 @@ const P={
 for(const [k,d] of Object.entries(P))d.v=d.int?parseInt(lsGet('p_'+k,d.v)):parseFloat(lsGet('p_'+k,d.v));
 
 // build sliders
-const panel=document.getElementById('panel');
+const panel=document.getElementById('panelBody');
 for(const [k,d] of Object.entries(P)){
   const row=document.createElement('div');
   const step=d.step||(d.int?1:.5);
