@@ -6,549 +6,546 @@
   <title>R1 GS Face Designer</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg:        #09090f;
-      --panel:     #0d0d16;
-      --section:   #12121e;
-      --border:    #1e1e30;
-      --accent:    #6e6eff;
-      --accent2:   #ff6eb0;
-      --text:      #c8c8de;
-      --muted:     #5a5a7a;
-      --val:       #a0a0ff;
-      --radius:    6px;
+      --bg:      #09090f;
+      --panel:   #0d0d16;
+      --sec:     #11111c;
+      --border:  #1d1d2e;
+      --accent:  #6e6eff;
+      --acc2:    #ff6eb0;
+      --text:    #c4c4da;
+      --muted:   #565672;
+      --val:     #9898ff;
+      --r:       6px;
     }
+    html, body { height: 100%; background: var(--bg); color: var(--text);
+      font-family: system-ui, sans-serif; font-size: 13px; overflow: hidden; }
 
-    html, body {
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: system-ui, sans-serif;
-      font-size: 13px;
-      overflow: hidden;
-    }
+    /* ── layout ── */
+    #app { display: grid; grid-template-rows: 42px 1fr;
+           grid-template-columns: 360px 1fr; height: 100vh; }
 
-    /* ── LAYOUT ── */
-    #app {
-      display: grid;
-      grid-template-rows: 42px 1fr;
-      grid-template-columns: 360px 1fr;
-      height: 100vh;
-    }
+    header { grid-column: 1/-1; display: flex; align-items: center; gap: 10px;
+             padding: 0 14px; background: var(--panel); border-bottom: 1px solid var(--border); }
+    header h1 { font-size: 14px; font-weight: 600; color: #fff; }
+    .htag { font-size: 10px; padding: 2px 7px; border-radius: 10px;
+            background: #161630; color: var(--accent); font-weight: 700; letter-spacing: .05em; }
+    .spacer { flex: 1; }
+    #save-status { font-size: 11px; color: var(--muted); min-width: 44px; }
+    header button { font-size: 12px; padding: 5px 11px; border-radius: var(--r);
+                    border: 1px solid var(--border); background: #14142a; color: var(--text);
+                    cursor: pointer; transition: background .15s; white-space: nowrap; }
+    header button:hover { background: #1e1e3a; }
+    header button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    header button.primary:hover { background: #5858ee; }
 
-    header {
-      grid-column: 1 / -1;
-      display: flex;
-      align-items: center;
-      padding: 0 16px;
-      gap: 12px;
-      border-bottom: 1px solid var(--border);
-      background: var(--panel);
-    }
-    header h1 { font-size: 14px; font-weight: 600; color: #fff; letter-spacing: 0.03em; }
-    header .tag {
-      font-size: 10px;
-      padding: 2px 7px;
-      border-radius: 10px;
-      background: #1a1a38;
-      color: var(--accent);
-      letter-spacing: 0.06em;
-      font-weight: 600;
-    }
-    header .spacer { flex: 1; }
-    header button {
-      font-size: 12px;
-      padding: 5px 12px;
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      background: #1a1a2e;
-      color: var(--text);
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    header button:hover { background: #22223e; }
+    /* ── panel ── */
+    #panel { background: var(--panel); border-right: 1px solid var(--border);
+             overflow-y: auto; overflow-x: hidden; }
+    #panel::-webkit-scrollbar { width: 4px; }
+    #panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-    /* ── PANEL ── */
-    #panel {
-      background: var(--panel);
-      border-right: 1px solid var(--border);
-      overflow-y: auto;
-      overflow-x: hidden;
-    }
-    #panel::-webkit-scrollbar { width: 5px; }
-    #panel::-webkit-scrollbar-track { background: transparent; }
-    #panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
-    /* ── SECTIONS ── */
+    /* ── sections ── */
     .section { border-bottom: 1px solid var(--border); }
-
-    .section-head {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 14px;
-      cursor: pointer;
-      background: var(--section);
-      user-select: none;
-      transition: background 0.1s;
-    }
-    .section-head:hover { background: #16162a; }
-    .section-head .label { font-weight: 600; font-size: 11px; letter-spacing: 0.08em; color: #fff; text-transform: uppercase; flex: 1; }
-    .section-head .badge {
-      font-size: 9px;
-      padding: 1px 6px;
-      border-radius: 8px;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-    }
-    .badge-gs { background: #1a1038; color: var(--accent); }
-    .badge-r1 { background: #1a2018; color: #80e080; }
-    .chevron { color: var(--muted); font-size: 10px; transition: transform 0.2s; }
+    .sec-head { display: flex; align-items: center; gap: 8px; padding: 9px 13px;
+                cursor: pointer; background: var(--sec); user-select: none; transition: background .1s; }
+    .sec-head:hover { background: #15152a; }
+    .sec-label { font-weight: 700; font-size: 11px; letter-spacing: .08em;
+                 text-transform: uppercase; color: #ddd; flex: 1; }
+    .chevron { color: var(--muted); font-size: 9px; transition: transform .18s; }
     .section.open .chevron { transform: rotate(90deg); }
+    .badge { font-size: 9px; padding: 1px 6px; border-radius: 8px; font-weight: 700; letter-spacing: .05em; }
+    .badge-GS { background: #14103a; color: var(--accent); }
+    .badge-R1 { background: #0e2010; color: #70e080; }
 
-    .section-body { display: none; padding: 10px 14px 14px; }
-    .section.open .section-body { display: block; }
+    .sec-body { display: none; padding: 10px 13px 14px; }
+    .section.open .sec-body { display: block; }
 
-    /* ── CONTROLS ── */
-    .row {
-      display: grid;
-      grid-template-columns: 130px 1fr 46px;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 9px;
-    }
-    .row label { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .row .val { color: var(--val); font-size: 12px; font-variant-numeric: tabular-nums; text-align: right; }
+    /* ── rows ── */
+    .row { display: grid; grid-template-columns: 128px 1fr 46px;
+           align-items: center; gap: 8px; margin-bottom: 8px; }
+    .row label { color: var(--muted); font-size: 12px; overflow: hidden;
+                 text-overflow: ellipsis; white-space: nowrap; }
+    .row .val { color: var(--val); font-size: 12px; text-align: right;
+                font-variant-numeric: tabular-nums; }
 
-    input[type=range] {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 100%;
-      height: 4px;
-      background: var(--border);
-      border-radius: 2px;
-      outline: none;
-    }
-    input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 13px; height: 13px;
-      border-radius: 50%;
-      background: var(--accent);
-      cursor: pointer;
-      border: 2px solid var(--bg);
-    }
-    .gs-section input[type=range]::-webkit-slider-thumb { background: var(--accent); }
+    input[type=range] { -webkit-appearance: none; appearance: none; width: 100%;
+                        height: 4px; background: var(--border); border-radius: 2px; outline: none; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 13px; height: 13px;
+      border-radius: 50%; background: var(--accent); cursor: pointer; border: 2px solid var(--bg); }
 
-    .subsection-label {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin: 14px 0 8px;
-      padding-bottom: 4px;
-      border-bottom: 1px solid var(--border);
-    }
-    .subsection-label:first-child { margin-top: 2px; }
+    .row.check-row { grid-template-columns: 128px 1fr; }
+    .row.check-row input[type=checkbox] { width: 16px; height: 16px;
+      accent-color: var(--accent); cursor: pointer; }
 
-    /* ── EMOTION TABS ── */
-    #emotion-tabs {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 14px;
-    }
-    .emo-tab {
-      padding: 5px 11px;
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
+    .row.color-row input[type=color] { width: 100%; height: 26px; border: 1px solid var(--border);
+      border-radius: 4px; background: none; cursor: pointer; padding: 2px; }
+
+    .sublabel { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+                color: var(--muted); margin: 14px 0 8px; padding-bottom: 4px;
+                border-bottom: 1px solid var(--border); }
+    .sublabel:first-child { margin-top: 2px; }
+
+    /* ── emotion tabs ── */
+    .emo-tabs { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+    .emo-tab { padding: 4px 10px; border-radius: var(--r); border: 1px solid var(--border);
+               background: transparent; color: var(--muted); font-size: 12px;
+               cursor: pointer; transition: all .15s; }
     .emo-tab:hover { border-color: var(--accent); color: var(--text); }
     .emo-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
-    /* ── PREVIEW ── */
-    #preview {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 14px;
-      background: var(--bg);
-    }
-    canvas {
-      display: block;
-      border-radius: 10px;
-      /* scale the 800×800 canvas to fit the preview area */
-      width: min(calc(100vw - 360px - 48px), calc(100vh - 42px - 48px));
-      height: min(calc(100vw - 360px - 48px), calc(100vh - 42px - 48px));
-    }
-
-    #preview-emotions {
-      display: flex;
-      gap: 8px;
-    }
-    #preview-emotions button {
-      padding: 5px 12px;
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      background: #12121e;
-      color: var(--muted);
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    #preview-emotions button:hover { border-color: var(--accent2); color: var(--text); }
-    #preview-emotions button.active { background: var(--accent2); border-color: var(--accent2); color: #fff; }
-
-    .color-row {
-      display: grid;
-      grid-template-columns: 130px 1fr;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 9px;
-    }
-    .color-row label { color: var(--muted); font-size: 12px; }
-    .color-row input[type=color] {
-      width: 100%;
-      height: 28px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      background: transparent;
-      cursor: pointer;
-      padding: 2px;
-    }
+    /* ── preview ── */
+    #preview { display: flex; flex-direction: column; align-items: center;
+               justify-content: center; gap: 12px; background: var(--bg); }
+    canvas { display: block; border-radius: 10px;
+             width:  min(calc(100vw - 360px - 48px), calc(100vh - 42px - 48px));
+             height: min(calc(100vw - 360px - 48px), calc(100vh - 42px - 48px)); }
+    #prev-bar { display: flex; gap: 7px; flex-wrap: wrap; justify-content: center; }
+    #prev-bar button { padding: 5px 12px; border-radius: var(--r); border: 1px solid var(--border);
+                       background: #12121e; color: var(--muted); font-size: 12px;
+                       cursor: pointer; transition: all .15s; }
+    #prev-bar button:hover { border-color: var(--acc2); color: var(--text); }
+    #prev-bar button.active { background: var(--acc2); border-color: var(--acc2); color: #fff; }
   </style>
 </head>
 <body>
 <div id="app">
   <header>
     <h1>R1 Face</h1>
-    <span class="tag">GAUSSIAN SPLAT DESIGNER</span>
+    <span class="htag">GS DESIGNER</span>
     <span class="spacer"></span>
-    <button id="btn-export">Copy JSON</button>
+    <span id="save-status"></span>
+    <button id="btn-reset">Reset</button>
+    <button id="btn-load">Load JSON</button>
+    <button id="btn-save">Save JSON</button>
+    <button id="btn-copy" class="primary">Copy JSON</button>
+    <input type="file" id="file-input" accept=".json" style="display:none">
   </header>
-
   <div id="panel"></div>
-
   <div id="preview">
     <canvas id="face" width="800" height="800"></canvas>
-    <div id="preview-emotions"></div>
+    <div id="prev-bar"></div>
   </div>
 </div>
 
 <script src="face.js"></script>
 <script>
 (function () {
-  const { P, GS, EM, S } = window.faceAPI;
-  const EMOTIONS = ['neutral', 'attentive', 'happy', 'surprised', 'thinking', 'tired'];
+'use strict';
 
-  let editEmotion = 'neutral';   // which emotion the panel is editing
+const { P, GS, EM, S } = window.faceAPI;
 
-  // ── HELPERS ──────────────────────────────────────────────────────────────
+const EMOTIONS   = ['neutral','attentive','happy','surprised','thinking','tired'];
+const SCALED_P   = ['eyeRx','eyeRy','eyeHalfGap','browXSpan','browThick','mouthThick','lookMax'];
+const SCALED_EM  = ['browYL','browYR','browCL','browCR','eyeYShift','mouthY','mouthW','mouthC','mouthOpen'];
+const LS_KEY     = 'r1gs-state-v2';
 
-  function fmt(v, step) {
-    if (step >= 1)    return Math.round(v).toString();
-    if (step >= 0.1)  return v.toFixed(1);
-    return v.toFixed(2);
+// Snapshot of factory defaults for Reset
+const DEFAULTS = JSON.parse(JSON.stringify(exportState()));
+
+let editEmotion = 'neutral';
+
+// ── EXPORT / IMPORT ────────────────────────────────────────────────────────
+
+function exportState() {
+  const pOut = {};
+  for (const k in P) {
+    if (SCALED_P.includes(k))   pOut[k] = +(P[k] / S).toFixed(3);
+    else if (Array.isArray(P[k])) pOut[k] = [...P[k]];
+    else                          pOut[k] = P[k];
   }
+  const emOut = {};
+  for (const emo in EM) {
+    emOut[emo] = {};
+    for (const k in EM[emo])
+      emOut[emo][k] = SCALED_EM.includes(k) ? +(EM[emo][k] / S).toFixed(3) : EM[emo][k];
+  }
+  return { editEmotion, P: pOut, GS: { ...GS }, EM: emOut };
+}
 
-  /**
-   * Build a labelled range slider that reads/writes obj[key].
-   * scale: multiply display value by this before storing (default 1).
-   * displayScale: divide stored value by this for display (default 1).
-   */
-  function makeRow(label, obj, key, min, max, step, storeScale) {
-    storeScale = storeScale || 1;
-    const displayVal = () => obj[key] / storeScale;
+function importState(data) {
+  if (data.editEmotion && EMOTIONS.includes(data.editEmotion))
+    editEmotion = data.editEmotion;
 
-    const row  = document.createElement('div');
-    row.className = 'row';
+  if (data.P) {
+    for (const k in data.P) {
+      if (!(k in P)) continue;
+      if (SCALED_P.includes(k))      P[k] = data.P[k] * S;
+      else if (Array.isArray(P[k])) { P[k][0] = data.P[k][0]; P[k][1] = data.P[k][1]; P[k][2] = data.P[k][2]; }
+      else                           P[k] = data.P[k];
+    }
+  }
+  if (data.GS)
+    for (const k in data.GS) { if (k in GS) GS[k] = data.GS[k]; }
 
-    const lbl = document.createElement('label');
-    lbl.textContent = label;
-    lbl.title = label;
+  if (data.EM)
+    for (const emo in data.EM) {
+      if (!EM[emo]) continue;
+      for (const k in data.EM[emo])
+        if (k in EM[emo])
+          EM[emo][k] = SCALED_EM.includes(k) ? data.EM[emo][k] * S : data.EM[emo][k];
+    }
 
-    const inp = document.createElement('input');
-    inp.type  = 'range';
-    inp.min   = min;
-    inp.max   = max;
-    inp.step  = step;
-    inp.value = displayVal();
+  buildPanel();
+  setEmotion(editEmotion);
+}
 
-    const val = document.createElement('span');
-    val.className = 'val';
-    val.textContent = fmt(displayVal(), step);
+// ── PERSISTENCE ────────────────────────────────────────────────────────────
 
+let saveTimer;
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    localStorage.setItem(LS_KEY, JSON.stringify(exportState()));
+    const el = document.getElementById('save-status');
+    if (el) { el.textContent = '● saved'; setTimeout(() => { el.textContent = ''; }, 1400); }
+  }, 600);
+}
+
+function tryRestoreStorage() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) importState(JSON.parse(raw));
+  } catch (_) { /* ignore corrupt data */ }
+}
+
+// ── CONTROL BUILDERS ───────────────────────────────────────────────────────
+
+function fmt(v, step) {
+  if (step >= 1)   return Math.round(v).toString();
+  if (step >= 0.1) return v.toFixed(1);
+  return v.toFixed(2);
+}
+
+// Slider that reads/writes obj[key], optionally scaling the stored value.
+function makeRow(label, obj, key, min, max, step, storeScale) {
+  storeScale = storeScale || 1;
+  const row = document.createElement('div');
+  row.className = 'row';
+  const lbl = document.createElement('label');
+  lbl.textContent = label; lbl.title = label;
+  const inp = document.createElement('input');
+  inp.type = 'range'; inp.min = min; inp.max = max; inp.step = step;
+  inp.value = obj[key] / storeScale;
+  const val = document.createElement('span');
+  val.className = 'val';
+  val.textContent = fmt(obj[key] / storeScale, step);
+  inp.addEventListener('input', () => {
+    const v = parseFloat(inp.value);
+    obj[key] = v * storeScale;
+    val.textContent = fmt(v, step);
+    scheduleSave();
+  });
+  row.append(lbl, inp, val);
+  return row;
+}
+
+// Checkbox — stores 0 or 1 into obj[key].
+function makeCheck(label, obj, key) {
+  const row = document.createElement('div');
+  row.className = 'row check-row';
+  const lbl = document.createElement('label');
+  lbl.textContent = label;
+  const inp = document.createElement('input');
+  inp.type = 'checkbox'; inp.checked = !!obj[key];
+  inp.addEventListener('change', () => { obj[key] = inp.checked ? 1 : 0; scheduleSave(); });
+  row.append(lbl, inp);
+  return row;
+}
+
+// Colour picker — obj[key] is either a hex string or an [r,g,b] array.
+function makeColor(label, P_key) {
+  const row = document.createElement('div');
+  row.className = 'row color-row';
+  const lbl = document.createElement('label');
+  lbl.textContent = label;
+  const inp = document.createElement('input');
+  inp.type = 'color';
+  if (typeof P[P_key] === 'string') {
+    inp.value = P[P_key];
+    inp.addEventListener('input', () => { P[P_key] = inp.value; scheduleSave(); });
+  } else {
+    const toHex = a => '#' + a.map(c => c.toString(16).padStart(2,'0')).join('');
+    inp.value = toHex(P[P_key]);
     inp.addEventListener('input', () => {
-      const v = parseFloat(inp.value);
-      obj[key] = v * storeScale;
-      val.textContent = fmt(v, step);
+      const h = inp.value;
+      P[P_key][0] = parseInt(h.slice(1,3),16);
+      P[P_key][1] = parseInt(h.slice(3,5),16);
+      P[P_key][2] = parseInt(h.slice(5,7),16);
+      scheduleSave();
     });
-
-    row.append(lbl, inp, val);
-    return row;
   }
+  const sp = document.createElement('span');
+  row.append(lbl, inp, sp);
+  return row;
+}
 
-  function makeColorRow(label, P_key, channel) {
-    // channel: index into the [r,g,b] array, or null if bgColor hex string
-    const row = document.createElement('div');
-    row.className = 'color-row';
+function sublabel(text, parent) {
+  const d = document.createElement('div');
+  d.className = 'sublabel'; d.textContent = text;
+  parent.appendChild(d);
+}
 
-    const lbl = document.createElement('label');
-    lbl.textContent = label;
+function makeSection(title, badge, open, buildFn) {
+  const sec  = document.createElement('div');
+  sec.className = 'section' + (open ? ' open' : '');
+  sec.dataset.title = title;
 
-    const inp = document.createElement('input');
-    inp.type = 'color';
-
-    if (channel === null) {
-      inp.value = P[P_key];
-      inp.addEventListener('input', () => { P[P_key] = inp.value; });
-    } else {
-      const toHex = (arr) => '#' + arr.map(c => c.toString(16).padStart(2,'0')).join('');
-      inp.value = toHex(P[P_key]);
-      inp.addEventListener('input', () => {
-        const hex = inp.value;
-        P[P_key][0] = parseInt(hex.slice(1,3),16);
-        P[P_key][1] = parseInt(hex.slice(3,5),16);
-        P[P_key][2] = parseInt(hex.slice(5,7),16);
-      });
-    }
-
-    row.append(lbl, inp);
-    return row;
+  const head = document.createElement('div');
+  head.className = 'sec-head';
+  const chev = document.createElement('span');
+  chev.className = 'chevron'; chev.textContent = '▶';
+  const lbl  = document.createElement('span');
+  lbl.className = 'sec-label'; lbl.textContent = title;
+  head.append(chev, lbl);
+  if (badge) {
+    const b = document.createElement('span');
+    b.className = `badge badge-${badge}`; b.textContent = badge;
+    head.appendChild(b);
   }
+  const body = document.createElement('div');
+  body.className = 'sec-body';
+  buildFn(body);
 
-  function makeSection(title, badge, cssClass, buildFn) {
-    const sec = document.createElement('div');
-    sec.className = 'section' + (cssClass ? ' ' + cssClass : '');
+  head.addEventListener('click', () => sec.classList.toggle('open'));
+  sec.append(head, body);
+  return sec;
+}
 
-    const head = document.createElement('div');
-    head.className = 'section-head';
-    head.innerHTML = `<span class="chevron">▶</span><span class="label">${title}</span>`;
-    if (badge) {
-      const b = document.createElement('span');
-      b.className = `badge badge-${badge.toLowerCase() === 'gs' ? 'gs' : 'r1'}`;
-      b.textContent = badge;
-      head.appendChild(b);
-    }
+// ── BUILD PANEL ────────────────────────────────────────────────────────────
 
-    const body = document.createElement('div');
-    body.className = 'section-body';
-    buildFn(body);
+const panel = document.getElementById('panel');
 
-    head.addEventListener('click', () => sec.classList.toggle('open'));
-    sec.append(head, body);
-    return sec;
-  }
+function buildPanel() {
+  // Remember which sections were open before rebuild
+  const wasOpen = new Set(
+    [...panel.querySelectorAll('.section.open')].map(s => s.dataset.title)
+  );
+  const firstBuild = wasOpen.size === 0;
+  const isOpen = t => firstBuild
+    ? (t === 'Eyes' || t === 'Gaussian Splats' || t === 'Emotions')
+    : wasOpen.has(t);
 
-  function subLabel(text, parent) {
-    const d = document.createElement('div');
-    d.className = 'subsection-label';
-    d.textContent = text;
-    parent.appendChild(d);
-  }
+  panel.innerHTML = '';
 
-  // ── BUILD PANEL ───────────────────────────────────────────────────────────
-
-  const panel = document.getElementById('panel');
-
-  // EYES
-  panel.appendChild(makeSection('Eyes', 'R1', '', body => {
-    body.appendChild(makeRow('Width (eyeRx)',    P, 'eyeRx',      5,  150, 1, 1));
-    body.appendChild(makeRow('Height (eyeRy)',   P, 'eyeRy',      5,  150, 1, 1));
-    body.appendChild(makeRow('Half-gap',         P, 'eyeHalfGap', 10, 250, 1, 1));
-    body.appendChild(makeRow('Offset Y',         P, 'eyeOffsetY',-100, 100, 1, 1));
-    body.appendChild(makeRow('Tilt (deg)',        P, 'eyeTilt',    0,   45, 0.5, 1));
+  // ── EYES ──
+  panel.appendChild(makeSection('Eyes', 'R1', isOpen('Eyes'), b => {
+    b.appendChild(makeRow('Width (eyeRx)',  P, 'eyeRx',      5,  200, 1, 1));
+    b.appendChild(makeRow('Height (eyeRy)', P, 'eyeRy',      5,  200, 1, 1));
+    b.appendChild(makeRow('Half-gap',       P, 'eyeHalfGap', 10, 300, 1, 1));
+    b.appendChild(makeRow('Offset Y',       P, 'eyeOffsetY',-150,150, 1, 1));
+    b.appendChild(makeRow('Tilt °',         P, 'eyeTilt',    0,   45, 0.5));
   }));
 
-  // GAUSSIAN SPLATS (GS-specific)
-  panel.appendChild(makeSection('Gaussian Splats', 'GS', 'gs-section open', body => {
-    subLabel('Gradient Falloff', body);
-    body.appendChild(makeRow('Stop 1 position',  GS, 'gradStop1Pos',   0.1, 0.9,  0.01));
-    body.appendChild(makeRow('Stop 1 opacity',   GS, 'gradStop1Alpha', 0.0, 1.0,  0.01));
-    body.appendChild(makeRow('Stop 2 position',  GS, 'gradStop2Pos',   0.2, 0.99, 0.01));
-    body.appendChild(makeRow('Stop 2 opacity',   GS, 'gradStop2Alpha', 0.0, 0.5,  0.01));
+  // ── GAUSSIAN SPLATS ──
+  panel.appendChild(makeSection('Gaussian Splats', 'GS', isOpen('Gaussian Splats'), b => {
+    sublabel('Gradient Falloff — all splats', b);
+    b.appendChild(makeRow('Stop 1 position',  GS, 'gradStop1Pos',   0.10, 0.90, 0.01));
+    b.appendChild(makeRow('Stop 1 opacity',   GS, 'gradStop1Alpha', 0.00, 1.00, 0.01));
+    b.appendChild(makeRow('Stop 2 position',  GS, 'gradStop2Pos',   0.20, 0.99, 0.01));
+    b.appendChild(makeRow('Stop 2 opacity',   GS, 'gradStop2Alpha', 0.00, 0.50, 0.01));
 
-    subLabel('Eye Ring', body);
-    body.appendChild(makeRow('Thickness ratio',  GS, 'eyeThickRatio',  0.03, 0.40, 0.01));
-    body.appendChild(makeRow('Thickness min px', GS, 'eyeThickMin',    1,    20,   1));
-    body.appendChild(makeRow('Glow radius ×',    GS, 'eyeGlowMult',    1.0,  5.0,  0.05));
-    body.appendChild(makeRow('Glow opacity',     GS, 'eyeGlowAlpha',   0.0,  0.5,  0.01));
-    body.appendChild(makeRow('Core opacity',     GS, 'eyeCoreAlpha',   0.1,  1.0,  0.01));
+    sublabel('Eye Splats', b);
+    b.appendChild(makeRow('Thickness ratio',  GS, 'eyeThickRatio',  0.03, 0.50, 0.01));
+    b.appendChild(makeRow('Thickness min px', GS, 'eyeThickMin',    1,    30,   1));
+    b.appendChild(makeRow('Glow radius ×',    GS, 'eyeGlowMult',    1.00, 6.00, 0.05));
+    b.appendChild(makeRow('Glow opacity',     GS, 'eyeGlowAlpha',   0.00, 0.60, 0.01));
+    b.appendChild(makeRow('Core opacity',     GS, 'eyeCoreAlpha',   0.10, 1.00, 0.01));
+    sublabel('Eye Mode', b);
+    b.appendChild(makeCheck('Scatter mode',   GS, 'eyeMode'));
+    b.appendChild(makeRow('Scatter count',    GS, 'eyeScatterCount', 20, 800, 10));
+    b.appendChild(makeRow('Radial spread ×',  GS, 'eyeSpread',       0.0, 4.0, 0.05));
 
-    subLabel('Arc Strokes (brow + mouth)', body);
-    body.appendChild(makeRow('Glow radius ×',    GS, 'arcGlowMult',    1.0,  5.0,  0.05));
-    body.appendChild(makeRow('Glow opacity ×',   GS, 'arcGlowAlpha',   0.0,  0.5,  0.01));
+    sublabel('Brow Splats', b);
+    b.appendChild(makeRow('Glow radius ×',    GS, 'browGlowMult',   1.00, 6.00, 0.05));
+    b.appendChild(makeRow('Glow opacity',     GS, 'browGlowAlpha',  0.00, 0.60, 0.01));
+    b.appendChild(makeRow('Core opacity',     GS, 'browCoreAlpha',  0.10, 1.00, 0.01));
+
+    sublabel('Mouth Splats', b);
+    b.appendChild(makeRow('Glow radius ×',    GS, 'mouthGlowMult',  1.00, 6.00, 0.05));
+    b.appendChild(makeRow('Glow opacity',     GS, 'mouthGlowAlpha', 0.00, 0.60, 0.01));
+    b.appendChild(makeRow('Core opacity',     GS, 'mouthCoreAlpha', 0.10, 1.00, 0.01));
+
+    sublabel('Arc Stroke Mode (brows + mouth)', b);
+    b.appendChild(makeCheck('Scatter mode',   GS, 'strokeMode'));
+    b.appendChild(makeRow('Splat count',      GS, 'strokeCount',    10, 600, 10));
+    b.appendChild(makeRow('Perp. spread ×',   GS, 'strokeSpread',   0.0, 6.0, 0.05));
   }));
 
-  // BROWS
-  panel.appendChild(makeSection('Brows', 'R1', '', body => {
-    body.appendChild(makeRow('Half-width',       P, 'browXSpan', 5, 200, 1, 1));
-    body.appendChild(makeRow('Stroke thickness', P, 'browThick', 1,  40, 0.5, 1));
+  // ── BROWS ──
+  panel.appendChild(makeSection('Brows', 'R1', isOpen('Brows'), b => {
+    b.appendChild(makeRow('Half-width',      P, 'browXSpan',  5, 250, 1, 1));
+    b.appendChild(makeRow('Stroke thick',    P, 'browThick',  1,  50, 0.5, 1));
   }));
 
-  // MOUTH
-  panel.appendChild(makeSection('Mouth', 'R1', '', body => {
-    body.appendChild(makeRow('Stroke thickness', P, 'mouthThick', 1, 40, 0.5, 1));
+  // ── MOUTH ──
+  panel.appendChild(makeSection('Mouth', 'R1', isOpen('Mouth'), b => {
+    b.appendChild(makeRow('Stroke thick',    P, 'mouthThick', 1,  50, 0.5, 1));
   }));
 
-  // COLOURS
-  panel.appendChild(makeSection('Colours', 'R1', '', body => {
-    body.appendChild(makeColorRow('Background', 'bgColor',    null));
-    body.appendChild(makeColorRow('Eyes',       'eyeColor',   0));
-    body.appendChild(makeColorRow('Brows',      'browColor',  0));
-    body.appendChild(makeColorRow('Mouth',      'mouthColor', 0));
+  // ── COLOURS ──
+  panel.appendChild(makeSection('Colours', 'R1', isOpen('Colours'), b => {
+    b.appendChild(makeColor('Background', 'bgColor'));
+    b.appendChild(makeColor('Eyes',       'eyeColor'));
+    b.appendChild(makeColor('Brows',      'browColor'));
+    b.appendChild(makeColor('Mouth',      'mouthColor'));
   }));
 
-  // ANIMATION
-  panel.appendChild(makeSection('Animation', 'R1', '', body => {
-    subLabel('Gaze', body);
-    body.appendChild(makeRow('Look range',      P, 'lookMax',      0, 150, 1, 1));
-    body.appendChild(makeRow('Move dur min ms', P, 'lookDurMin',  50, 800, 10));
-    body.appendChild(makeRow('Move dur max ms', P, 'lookDurMax', 100,2000, 10));
-    body.appendChild(makeRow('Wait min ms',     P, 'lookWaitMin', 100,5000, 100));
-    body.appendChild(makeRow('Wait max ms',     P, 'lookWaitMax', 200,8000, 100));
-    body.appendChild(makeRow('Hold min ms',     P, 'lookHoldMin',  50,3000,  50));
-    body.appendChild(makeRow('Hold max ms',     P, 'lookHoldMax', 100,6000, 100));
-
-    subLabel('Blink', body);
-    body.appendChild(makeRow('Wait min ms',     P, 'blinkWaitMin', 200, 8000, 100));
-    body.appendChild(makeRow('Wait max ms',     P, 'blinkWaitMax', 500,12000, 100));
+  // ── ANIMATION ──
+  panel.appendChild(makeSection('Animation', 'R1', isOpen('Animation'), b => {
+    sublabel('Gaze', b);
+    b.appendChild(makeRow('Look range',   P, 'lookMax',      0, 200, 1, 1));
+    b.appendChild(makeRow('Move min ms',  P, 'lookDurMin',  50, 800,  10));
+    b.appendChild(makeRow('Move max ms',  P, 'lookDurMax', 100,2000,  10));
+    b.appendChild(makeRow('Wait min ms',  P, 'lookWaitMin', 100,5000, 100));
+    b.appendChild(makeRow('Wait max ms',  P, 'lookWaitMax', 200,8000, 100));
+    b.appendChild(makeRow('Hold min ms',  P, 'lookHoldMin',  50,3000,  50));
+    b.appendChild(makeRow('Hold max ms',  P, 'lookHoldMax', 100,6000, 100));
+    sublabel('Blink', b);
+    b.appendChild(makeRow('Wait min ms',  P, 'blinkWaitMin', 200, 8000, 100));
+    b.appendChild(makeRow('Wait max ms',  P, 'blinkWaitMax', 500,12000, 100));
   }));
 
-  // EMOTIONS (per-emotion sliders)
-  panel.appendChild(makeSection('Emotions', 'R1', 'open', body => {
-
-    // Tab row
+  // ── EMOTIONS ──
+  panel.appendChild(makeSection('Emotions', 'R1', isOpen('Emotions'), b => {
     const tabs = document.createElement('div');
-    tabs.id = 'emotion-tabs';
+    tabs.className = 'emo-tabs';
+
+    const sliderWrap = document.createElement('div');
+
+    function switchEmo(key) {
+      editEmotion = key;
+      setEmotion(key);
+      tabs.querySelectorAll('.emo-tab').forEach(t => t.classList.toggle('active', t.textContent === key));
+      syncPrevBar(key);
+      buildEmoSliders();
+    }
+
     EMOTIONS.forEach(key => {
       const btn = document.createElement('button');
       btn.className = 'emo-tab' + (key === editEmotion ? ' active' : '');
       btn.textContent = key;
-      btn.addEventListener('click', () => {
-        editEmotion = key;
-        setEmotion(key);
-        tabs.querySelectorAll('.emo-tab').forEach(b => b.classList.toggle('active', b.textContent === key));
-        rebuildEmoSliders();
-      });
+      btn.addEventListener('click', () => switchEmo(key));
       tabs.appendChild(btn);
     });
-    body.appendChild(tabs);
 
-    // Slider container (rebuilt when tab changes)
-    const sliderWrap = document.createElement('div');
-    sliderWrap.id = 'emo-sliders';
-    body.appendChild(sliderWrap);
-
-    function rebuildEmoSliders() {
+    function buildEmoSliders() {
       sliderWrap.innerHTML = '';
-      const e   = EM[editEmotion];
-      const add = (label, key, min, max, step, scaled) => {
-        sliderWrap.appendChild(makeRow(label, e, key, min, max, step, scaled ? S : 1));
-      };
+      const e = EM[editEmotion];
+      const add = (lbl, k, mn, mx, st, sc) =>
+        sliderWrap.appendChild(makeRow(lbl, e, k, mn, mx, st, sc ? S : 1));
 
-      subLabel('Eyes', sliderWrap);
-      add('Height scale',   'eyeRyScale',  0.3, 1.8,  0.05);
-      add('Y shift (ref)',  'eyeYShift',  -20,  20,   1, true);
-      add('Lid rest (0–1)', 'lidRest',     0,   0.6,  0.01);
-      add('Blink rate ×',   'blinkMult',   0.1, 3.0,  0.1);
-
-      subLabel('Brows', sliderWrap);
-      add('Left Y (ref)',   'browYL',     -80,  40,   1, true);
-      add('Right Y (ref)',  'browYR',     -80,  40,   1, true);
-      add('Left arch',      'browCL',      -6,  20,   0.5, true);
-      add('Right arch',     'browCR',      -6,  20,   0.5, true);
-      add('Angle (deg)',    'browAngle',  -20,  20,   0.5);
-
-      subLabel('Mouth', sliderWrap);
-      add('Y offset (ref)', 'mouthY',      0, 100,   1, true);
-      add('Width (ref)',    'mouthW',       4,  60,   1, true);
-      add('Curve (ref)',    'mouthC',     -15,  15,   0.5, true);
-      add('Open (ref)',     'mouthOpen',    0,  40,   1, true);
-
-      subLabel('Transition', sliderWrap);
-      add('Duration ms',    'transDur',    50,2000,  50);
+      sublabel('Eyes', sliderWrap);
+      add('Height scale',   'eyeRyScale',  0.3, 2.0, 0.05);
+      add('Y shift (ref)',  'eyeYShift',  -20,  20,  1, true);
+      add('Lid rest',       'lidRest',    0.0, 0.6,  0.01);
+      add('Blink rate ×',   'blinkMult',  0.1, 3.0,  0.1);
+      sublabel('Brows', sliderWrap);
+      add('Left Y (ref)',   'browYL',     -80,  40,  1, true);
+      add('Right Y (ref)',  'browYR',     -80,  40,  1, true);
+      add('Left arch',      'browCL',      -6,  20,  0.5, true);
+      add('Right arch',     'browCR',      -6,  20,  0.5, true);
+      add('Angle °',        'browAngle',  -20,  20,  0.5);
+      sublabel('Mouth', sliderWrap);
+      add('Y offset (ref)', 'mouthY',      0, 130,   1, true);
+      add('Width (ref)',    'mouthW',      4,   80,   1, true);
+      add('Curve (ref)',    'mouthC',    -20,   20,   0.5, true);
+      add('Open (ref)',     'mouthOpen',   0,   50,   1, true);
+      sublabel('Transition', sliderWrap);
+      add('Duration ms',    'transDur',   50, 2000,  50);
     }
 
-    rebuildEmoSliders();
+    b.append(tabs, sliderWrap);
+    buildEmoSliders();
   }));
 
-  // ── PREVIEW EMOTION BUTTONS ───────────────────────────────────────────────
+  buildPrevBar();
+}
 
-  const previewBar = document.getElementById('preview-emotions');
+// ── PREVIEW BAR ────────────────────────────────────────────────────────────
+
+const prevBar = document.getElementById('prev-bar');
+
+function buildPrevBar() {
+  prevBar.innerHTML = '';
   EMOTIONS.forEach(key => {
     const btn = document.createElement('button');
     btn.textContent = key;
-    if (key === 'neutral') btn.classList.add('active');
+    btn.classList.toggle('active', key === window.faceAPI.st.emoKey);
     btn.addEventListener('click', () => {
       setEmotion(key);
-      previewBar.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.textContent === key));
-      // Sync panel tab to whichever emotion was clicked
+      syncPrevBar(key);
+      // Sync the panel emotion tab too
       editEmotion = key;
-      document.querySelectorAll('.emo-tab').forEach(b => b.classList.toggle('active', b.textContent === key));
-      const wrap = document.getElementById('emo-sliders');
-      if (wrap) {
-        // Trigger rebuild via the tab's click handler proxy
-        const tab = [...document.querySelectorAll('.emo-tab')].find(b => b.textContent === key);
-        if (tab) tab.dispatchEvent(new MouseEvent('click'));
-      }
+      panel.querySelectorAll('.emo-tab').forEach(t => t.classList.toggle('active', t.textContent === key));
     });
-    previewBar.appendChild(btn);
+    prevBar.appendChild(btn);
   });
+}
 
-  // Keyboard shortcuts 1–6
-  const EMOTION_KEYS = EMOTIONS;
-  document.addEventListener('keydown', e => {
-    const idx = parseInt(e.key, 10) - 1;
-    if (idx >= 0 && idx < EMOTION_KEYS.length) {
-      const key = EMOTION_KEYS[idx];
-      previewBar.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.textContent === key));
-      setEmotion(key);
-    }
+function syncPrevBar(key) {
+  prevBar.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.textContent === key));
+}
+
+// Keyboard 1–6
+document.addEventListener('keydown', ev => {
+  const idx = parseInt(ev.key, 10) - 1;
+  if (idx >= 0 && idx < EMOTIONS.length) {
+    const key = EMOTIONS[idx];
+    setEmotion(key);
+    syncPrevBar(key);
+  }
+});
+
+// ── HEADER BUTTONS ─────────────────────────────────────────────────────────
+
+// Copy JSON → clipboard
+document.getElementById('btn-copy').addEventListener('click', () => {
+  navigator.clipboard.writeText(JSON.stringify(exportState(), null, 2)).then(() => {
+    const btn = document.getElementById('btn-copy');
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 1400);
   });
+});
 
-  // ── EXPORT JSON ───────────────────────────────────────────────────────────
+// Save JSON → download file
+document.getElementById('btn-save').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(exportState(), null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = `r1-face-${new Date().toISOString().slice(0,19).replace(/[T:]/g,'-')}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
 
-  document.getElementById('btn-export').addEventListener('click', () => {
-    // Produce a clean export with pixel values in reference space (÷S)
-    const scaledKeys = ['eyeRx','eyeRy','eyeHalfGap','browXSpan','browThick','mouthThick','lookMax'];
-    const pOut = {};
-    for (const k in P) {
-      if (scaledKeys.includes(k)) pOut[k] = +(P[k] / S).toFixed(2);
-      else if (Array.isArray(P[k])) pOut[k] = P[k].slice();
-      else pOut[k] = P[k];
-    }
+// Load JSON ← file picker
+const fileInput = document.getElementById('file-input');
+document.getElementById('btn-load').addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', () => {
+  const file = fileInput.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try { importState(JSON.parse(ev.target.result)); }
+    catch (e) { alert('Could not parse JSON: ' + e.message); }
+  };
+  reader.readAsText(file);
+  fileInput.value = '';
+});
 
-    const emScaledKeys = ['browYL','browYR','browCL','browCR','eyeYShift','mouthY','mouthW','mouthC','mouthOpen'];
-    const emOut = {};
-    for (const emo in EM) {
-      emOut[emo] = {};
-      for (const k in EM[emo]) {
-        emOut[emo][k] = emScaledKeys.includes(k)
-          ? +(EM[emo][k] / S).toFixed(2)
-          : EM[emo][k];
-      }
-    }
+// Reset → factory defaults
+document.getElementById('btn-reset').addEventListener('click', () => {
+  if (!confirm('Reset all parameters to defaults?')) return;
+  importState(JSON.parse(JSON.stringify(DEFAULTS)));
+  localStorage.removeItem(LS_KEY);
+});
 
-    const out = { P: pOut, GS, EM: emOut };
-    navigator.clipboard.writeText(JSON.stringify(out, null, 2))
-      .then(() => {
-        const btn = document.getElementById('btn-export');
-        btn.textContent = 'Copied!';
-        setTimeout(() => { btn.textContent = 'Copy JSON'; }, 1500);
-      });
-  });
+// ── INIT ───────────────────────────────────────────────────────────────────
 
-  // Open first section by default
-  document.querySelector('.section')?.classList.add('open');
+tryRestoreStorage();
+buildPanel();
 
 })();
 </script>
