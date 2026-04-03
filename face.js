@@ -121,12 +121,12 @@ function splat(x, y, sx, sy, a, r, g, b, alpha) {
   ctx.rotate(a);
   ctx.scale(sx, sy);
 
-  // Four stops approximate the Gaussian bell (e^{-r²/2} at r = 0, 1, 2, 3)
+  // Steep falloff: full brightness to ~50% radius, then sharp drop to transparent
   const R = 3;
   const gr = ctx.createRadialGradient(0, 0, 0, 0, 0, R);
   gr.addColorStop(0,    `rgba(${r},${g},${b},${alpha.toFixed(4)})`);
-  gr.addColorStop(0.33, `rgba(${r},${g},${b},${(alpha * 0.61).toFixed(4)})`);
-  gr.addColorStop(0.67, `rgba(${r},${g},${b},${(alpha * 0.14).toFixed(4)})`);
+  gr.addColorStop(0.45, `rgba(${r},${g},${b},${(alpha * 0.90).toFixed(4)})`);
+  gr.addColorStop(0.75, `rgba(${r},${g},${b},${(alpha * 0.15).toFixed(4)})`);
   gr.addColorStop(1,    `rgba(${r},${g},${b},0)`);
 
   ctx.fillStyle = gr;
@@ -166,7 +166,7 @@ function drawArc(cx, cy, xSpan, curve, rot, thick, r, g, b, alpha) {
     const wx = cx + lx * cosR - ly * sinR;
     const wy = cy + lx * sinR + ly * cosR;
 
-    splat(wx, wy, thick * 2.4, thick * 2.4, 0, r, g, b, alpha * 0.18); // soft glow
+    splat(wx, wy, thick * 1.2, thick * 1.2, 0, r, g, b, alpha * 0.09); // soft glow
     splat(wx, wy, thick,       thick,       0, r, g, b, alpha);         // bright core
   }
 }
@@ -199,7 +199,7 @@ function drawEye(cx, cy, rx, ry, tiltDeg, lidClosure, r, g, b) {
     const wx = cx + lx * cosT - ly * sinT;
     const wy = cy + lx * sinT + ly * cosT;
 
-    splat(wx, wy, thick * 2.6, thick * 2.6, 0, r, g, b, 0.11); // outer glow halo
+    splat(wx, wy, thick * 1.3, thick * 1.3, 0, r, g, b, 0.06); // outer glow halo
     splat(wx, wy, thick,       thick,       0, r, g, b, 0.88); // bright ring core
   }
 }
