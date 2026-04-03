@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>R1 GS Face Designer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #09090f;
+      --panel:     #0d0d16;
+      --section:   #12121e;
+      --border:    #1e1e30;
+      --accent:    #6e6eff;
+      --accent2:   #ff6eb0;
+      --text:      #c8c8de;
+      --muted:     #5a5a7a;
+      --val:       #a0a0ff;
+      --radius:    6px;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, sans-serif;
+      font-size: 13px;
+      overflow: hidden;
+    }
+
+    /* ── LAYOUT ── */
+    #app {
+      display: grid;
+      grid-template-rows: 42px 1fr;
+      grid-template-columns: 360px 1fr;
+      height: 100vh;
+    }
+
+    header {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+    }
+    header h1 { font-size: 14px; font-weight: 600; color: #fff; letter-spacing: 0.03em; }
+    header .tag {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 10px;
+      background: #1a1a38;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      font-weight: 600;
+    }
+    header .spacer { flex: 1; }
+    header button {
+      font-size: 12px;
+      padding: 5px 12px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: #1a1a2e;
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    header button:hover { background: #22223e; }
+
+    /* ── PANEL ── */
+    #panel {
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+    #panel::-webkit-scrollbar { width: 5px; }
+    #panel::-webkit-scrollbar-track { background: transparent; }
+    #panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── SECTIONS ── */
+    .section { border-bottom: 1px solid var(--border); }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      background: var(--section);
+      user-select: none;
+      transition: background 0.1s;
+    }
+    .section-head:hover { background: #16162a; }
+    .section-head .label { font-weight: 600; font-size: 11px; letter-spacing: 0.08em; color: #fff; text-transform: uppercase; flex: 1; }
+    .section-head .badge {
+      font-size: 9px;
+      padding: 1px 6px;
+      border-radius: 8px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    .badge-gs { background: #1a1038; color: var(--accent); }
+    .badge-r1 { background: #1a2018; color: #80e080; }
+    .chevron { color: var(--muted); font-size: 10px; transition: transform 0.2s; }
+    .section.open .chevron { transform: rotate(90deg); }
+
+    .section-body { display: none; padding: 10px 14px 14px; }
+    .section.open .section-body { display: block; }
+
+    /* ── CONTROLS ── */
+    .row {
+      display: grid;
+      grid-template-columns: 130px 1fr 46px;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 9px;
+    }
+    .row label { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .row .val { color: var(--val); font-size: 12px; font-variant-numeric: tabular-nums; text-align: right; }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 13px; height: 13px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      border: 2px solid var(--bg);
+    }
+    .gs-section input[type=range]::-webkit-slider-thumb { background: var(--accent); }
+
+    .subsection-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 14px 0 8px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--border);
+    }
+    .subsection-label:first-child { margin-top: 2px; }
+
+    /* ── EMOTION TABS ── */
+    #emotion-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .emo-tab {
+      padding: 5px 11px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .emo-tab:hover { border-color: var(--accent); color: var(--text); }
+    .emo-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+    /* ── PREVIEW ── */
+    #preview {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      background: var(--bg);
+    }
+    canvas {
+      display: block;
+      border-radius: 10px;
+      /* scale the 800×800 canvas to fit the preview area */
+      width: min(calc(100vw - 360px - 48px), calc(100vh - 42px - 48px));
+      height: min(calc(100vw - 360px - 48px), calc(100vh - 42px - 48px));
+    }
+
+    #preview-emotions {
+      display: flex;
+      gap: 8px;
+    }
+    #preview-emotions button {
+      padding: 5px 12px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: #12121e;
+      color: var(--muted);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    #preview-emotions button:hover { border-color: var(--accent2); color: var(--text); }
+    #preview-emotions button.active { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+
+    .color-row {
+      display: grid;
+      grid-template-columns: 130px 1fr;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 9px;
+    }
+    .color-row label { color: var(--muted); font-size: 12px; }
+    .color-row input[type=color] {
+      width: 100%;
+      height: 28px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: transparent;
+      cursor: pointer;
+      padding: 2px;
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>R1 Face</h1>
+    <span class="tag">GAUSSIAN SPLAT DESIGNER</span>
+    <span class="spacer"></span>
+    <button id="btn-export">Copy JSON</button>
+  </header>
+
+  <div id="panel"></div>
+
+  <div id="preview">
+    <canvas id="face" width="800" height="800"></canvas>
+    <div id="preview-emotions"></div>
+  </div>
+</div>
+
+<script src="face.js"></script>
+<script>
+(function () {
+  const { P, GS, EM, S } = window.faceAPI;
+  const EMOTIONS = ['neutral', 'attentive', 'happy', 'surprised', 'thinking', 'tired'];
+
+  let editEmotion = 'neutral';   // which emotion the panel is editing
+
+  // ── HELPERS ──────────────────────────────────────────────────────────────
+
+  function fmt(v, step) {
+    if (step >= 1)    return Math.round(v).toString();
+    if (step >= 0.1)  return v.toFixed(1);
+    return v.toFixed(2);
+  }
+
+  /**
+   * Build a labelled range slider that reads/writes obj[key].
+   * scale: multiply display value by this before storing (default 1).
+   * displayScale: divide stored value by this for display (default 1).
+   */
+  function makeRow(label, obj, key, min, max, step, storeScale) {
+    storeScale = storeScale || 1;
+    const displayVal = () => obj[key] / storeScale;
+
+    const row  = document.createElement('div');
+    row.className = 'row';
+
+    const lbl = document.createElement('label');
+    lbl.textContent = label;
+    lbl.title = label;
+
+    const inp = document.createElement('input');
+    inp.type  = 'range';
+    inp.min   = min;
+    inp.max   = max;
+    inp.step  = step;
+    inp.value = displayVal();
+
+    const val = document.createElement('span');
+    val.className = 'val';
+    val.textContent = fmt(displayVal(), step);
+
+    inp.addEventListener('input', () => {
+      const v = parseFloat(inp.value);
+      obj[key] = v * storeScale;
+      val.textContent = fmt(v, step);
+    });
+
+    row.append(lbl, inp, val);
+    return row;
+  }
+
+  function makeColorRow(label, P_key, channel) {
+    // channel: index into the [r,g,b] array, or null if bgColor hex string
+    const row = document.createElement('div');
+    row.className = 'color-row';
+
+    const lbl = document.createElement('label');
+    lbl.textContent = label;
+
+    const inp = document.createElement('input');
+    inp.type = 'color';
+
+    if (channel === null) {
+      inp.value = P[P_key];
+      inp.addEventListener('input', () => { P[P_key] = inp.value; });
+    } else {
+      const toHex = (arr) => '#' + arr.map(c => c.toString(16).padStart(2,'0')).join('');
+      inp.value = toHex(P[P_key]);
+      inp.addEventListener('input', () => {
+        const hex = inp.value;
+        P[P_key][0] = parseInt(hex.slice(1,3),16);
+        P[P_key][1] = parseInt(hex.slice(3,5),16);
+        P[P_key][2] = parseInt(hex.slice(5,7),16);
+      });
+    }
+
+    row.append(lbl, inp);
+    return row;
+  }
+
+  function makeSection(title, badge, cssClass, buildFn) {
+    const sec = document.createElement('div');
+    sec.className = 'section' + (cssClass ? ' ' + cssClass : '');
+
+    const head = document.createElement('div');
+    head.className = 'section-head';
+    head.innerHTML = `<span class="chevron">▶</span><span class="label">${title}</span>`;
+    if (badge) {
+      const b = document.createElement('span');
+      b.className = `badge badge-${badge.toLowerCase() === 'gs' ? 'gs' : 'r1'}`;
+      b.textContent = badge;
+      head.appendChild(b);
+    }
+
+    const body = document.createElement('div');
+    body.className = 'section-body';
+    buildFn(body);
+
+    head.addEventListener('click', () => sec.classList.toggle('open'));
+    sec.append(head, body);
+    return sec;
+  }
+
+  function subLabel(text, parent) {
+    const d = document.createElement('div');
+    d.className = 'subsection-label';
+    d.textContent = text;
+    parent.appendChild(d);
+  }
+
+  // ── BUILD PANEL ───────────────────────────────────────────────────────────
+
+  const panel = document.getElementById('panel');
+
+  // EYES
+  panel.appendChild(makeSection('Eyes', 'R1', '', body => {
+    body.appendChild(makeRow('Width (eyeRx)',    P, 'eyeRx',      5,  150, 1, 1));
+    body.appendChild(makeRow('Height (eyeRy)',   P, 'eyeRy',      5,  150, 1, 1));
+    body.appendChild(makeRow('Half-gap',         P, 'eyeHalfGap', 10, 250, 1, 1));
+    body.appendChild(makeRow('Offset Y',         P, 'eyeOffsetY',-100, 100, 1, 1));
+    body.appendChild(makeRow('Tilt (deg)',        P, 'eyeTilt',    0,   45, 0.5, 1));
+  }));
+
+  // GAUSSIAN SPLATS (GS-specific)
+  panel.appendChild(makeSection('Gaussian Splats', 'GS', 'gs-section open', body => {
+    subLabel('Gradient Falloff', body);
+    body.appendChild(makeRow('Stop 1 position',  GS, 'gradStop1Pos',   0.1, 0.9,  0.01));
+    body.appendChild(makeRow('Stop 1 opacity',   GS, 'gradStop1Alpha', 0.0, 1.0,  0.01));
+    body.appendChild(makeRow('Stop 2 position',  GS, 'gradStop2Pos',   0.2, 0.99, 0.01));
+    body.appendChild(makeRow('Stop 2 opacity',   GS, 'gradStop2Alpha', 0.0, 0.5,  0.01));
+
+    subLabel('Eye Ring', body);
+    body.appendChild(makeRow('Thickness ratio',  GS, 'eyeThickRatio',  0.03, 0.40, 0.01));
+    body.appendChild(makeRow('Thickness min px', GS, 'eyeThickMin',    1,    20,   1));
+    body.appendChild(makeRow('Glow radius ×',    GS, 'eyeGlowMult',    1.0,  5.0,  0.05));
+    body.appendChild(makeRow('Glow opacity',     GS, 'eyeGlowAlpha',   0.0,  0.5,  0.01));
+    body.appendChild(makeRow('Core opacity',     GS, 'eyeCoreAlpha',   0.1,  1.0,  0.01));
+
+    subLabel('Arc Strokes (brow + mouth)', body);
+    body.appendChild(makeRow('Glow radius ×',    GS, 'arcGlowMult',    1.0,  5.0,  0.05));
+    body.appendChild(makeRow('Glow opacity ×',   GS, 'arcGlowAlpha',   0.0,  0.5,  0.01));
+  }));
+
+  // BROWS
+  panel.appendChild(makeSection('Brows', 'R1', '', body => {
+    body.appendChild(makeRow('Half-width',       P, 'browXSpan', 5, 200, 1, 1));
+    body.appendChild(makeRow('Stroke thickness', P, 'browThick', 1,  40, 0.5, 1));
+  }));
+
+  // MOUTH
+  panel.appendChild(makeSection('Mouth', 'R1', '', body => {
+    body.appendChild(makeRow('Stroke thickness', P, 'mouthThick', 1, 40, 0.5, 1));
+  }));
+
+  // COLOURS
+  panel.appendChild(makeSection('Colours', 'R1', '', body => {
+    body.appendChild(makeColorRow('Background', 'bgColor',    null));
+    body.appendChild(makeColorRow('Eyes',       'eyeColor',   0));
+    body.appendChild(makeColorRow('Brows',      'browColor',  0));
+    body.appendChild(makeColorRow('Mouth',      'mouthColor', 0));
+  }));
+
+  // ANIMATION
+  panel.appendChild(makeSection('Animation', 'R1', '', body => {
+    subLabel('Gaze', body);
+    body.appendChild(makeRow('Look range',      P, 'lookMax',      0, 150, 1, 1));
+    body.appendChild(makeRow('Move dur min ms', P, 'lookDurMin',  50, 800, 10));
+    body.appendChild(makeRow('Move dur max ms', P, 'lookDurMax', 100,2000, 10));
+    body.appendChild(makeRow('Wait min ms',     P, 'lookWaitMin', 100,5000, 100));
+    body.appendChild(makeRow('Wait max ms',     P, 'lookWaitMax', 200,8000, 100));
+    body.appendChild(makeRow('Hold min ms',     P, 'lookHoldMin',  50,3000,  50));
+    body.appendChild(makeRow('Hold max ms',     P, 'lookHoldMax', 100,6000, 100));
+
+    subLabel('Blink', body);
+    body.appendChild(makeRow('Wait min ms',     P, 'blinkWaitMin', 200, 8000, 100));
+    body.appendChild(makeRow('Wait max ms',     P, 'blinkWaitMax', 500,12000, 100));
+  }));
+
+  // EMOTIONS (per-emotion sliders)
+  panel.appendChild(makeSection('Emotions', 'R1', 'open', body => {
+
+    // Tab row
+    const tabs = document.createElement('div');
+    tabs.id = 'emotion-tabs';
+    EMOTIONS.forEach(key => {
+      const btn = document.createElement('button');
+      btn.className = 'emo-tab' + (key === editEmotion ? ' active' : '');
+      btn.textContent = key;
+      btn.addEventListener('click', () => {
+        editEmotion = key;
+        setEmotion(key);
+        tabs.querySelectorAll('.emo-tab').forEach(b => b.classList.toggle('active', b.textContent === key));
+        rebuildEmoSliders();
+      });
+      tabs.appendChild(btn);
+    });
+    body.appendChild(tabs);
+
+    // Slider container (rebuilt when tab changes)
+    const sliderWrap = document.createElement('div');
+    sliderWrap.id = 'emo-sliders';
+    body.appendChild(sliderWrap);
+
+    function rebuildEmoSliders() {
+      sliderWrap.innerHTML = '';
+      const e   = EM[editEmotion];
+      const add = (label, key, min, max, step, scaled) => {
+        sliderWrap.appendChild(makeRow(label, e, key, min, max, step, scaled ? S : 1));
+      };
+
+      subLabel('Eyes', sliderWrap);
+      add('Height scale',   'eyeRyScale',  0.3, 1.8,  0.05);
+      add('Y shift (ref)',  'eyeYShift',  -20,  20,   1, true);
+      add('Lid rest (0–1)', 'lidRest',     0,   0.6,  0.01);
+      add('Blink rate ×',   'blinkMult',   0.1, 3.0,  0.1);
+
+      subLabel('Brows', sliderWrap);
+      add('Left Y (ref)',   'browYL',     -80,  40,   1, true);
+      add('Right Y (ref)',  'browYR',     -80,  40,   1, true);
+      add('Left arch',      'browCL',      -6,  20,   0.5, true);
+      add('Right arch',     'browCR',      -6,  20,   0.5, true);
+      add('Angle (deg)',    'browAngle',  -20,  20,   0.5);
+
+      subLabel('Mouth', sliderWrap);
+      add('Y offset (ref)', 'mouthY',      0, 100,   1, true);
+      add('Width (ref)',    'mouthW',       4,  60,   1, true);
+      add('Curve (ref)',    'mouthC',     -15,  15,   0.5, true);
+      add('Open (ref)',     'mouthOpen',    0,  40,   1, true);
+
+      subLabel('Transition', sliderWrap);
+      add('Duration ms',    'transDur',    50,2000,  50);
+    }
+
+    rebuildEmoSliders();
+  }));
+
+  // ── PREVIEW EMOTION BUTTONS ───────────────────────────────────────────────
+
+  const previewBar = document.getElementById('preview-emotions');
+  EMOTIONS.forEach(key => {
+    const btn = document.createElement('button');
+    btn.textContent = key;
+    if (key === 'neutral') btn.classList.add('active');
+    btn.addEventListener('click', () => {
+      setEmotion(key);
+      previewBar.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.textContent === key));
+      // Sync panel tab to whichever emotion was clicked
+      editEmotion = key;
+      document.querySelectorAll('.emo-tab').forEach(b => b.classList.toggle('active', b.textContent === key));
+      const wrap = document.getElementById('emo-sliders');
+      if (wrap) {
+        // Trigger rebuild via the tab's click handler proxy
+        const tab = [...document.querySelectorAll('.emo-tab')].find(b => b.textContent === key);
+        if (tab) tab.dispatchEvent(new MouseEvent('click'));
+      }
+    });
+    previewBar.appendChild(btn);
+  });
+
+  // Keyboard shortcuts 1–6
+  const EMOTION_KEYS = EMOTIONS;
+  document.addEventListener('keydown', e => {
+    const idx = parseInt(e.key, 10) - 1;
+    if (idx >= 0 && idx < EMOTION_KEYS.length) {
+      const key = EMOTION_KEYS[idx];
+      previewBar.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.textContent === key));
+      setEmotion(key);
+    }
+  });
+
+  // ── EXPORT JSON ───────────────────────────────────────────────────────────
+
+  document.getElementById('btn-export').addEventListener('click', () => {
+    // Produce a clean export with pixel values in reference space (÷S)
+    const scaledKeys = ['eyeRx','eyeRy','eyeHalfGap','browXSpan','browThick','mouthThick','lookMax'];
+    const pOut = {};
+    for (const k in P) {
+      if (scaledKeys.includes(k)) pOut[k] = +(P[k] / S).toFixed(2);
+      else if (Array.isArray(P[k])) pOut[k] = P[k].slice();
+      else pOut[k] = P[k];
+    }
+
+    const emScaledKeys = ['browYL','browYR','browCL','browCR','eyeYShift','mouthY','mouthW','mouthC','mouthOpen'];
+    const emOut = {};
+    for (const emo in EM) {
+      emOut[emo] = {};
+      for (const k in EM[emo]) {
+        emOut[emo][k] = emScaledKeys.includes(k)
+          ? +(EM[emo][k] / S).toFixed(2)
+          : EM[emo][k];
+      }
+    }
+
+    const out = { P: pOut, GS, EM: emOut };
+    navigator.clipboard.writeText(JSON.stringify(out, null, 2))
+      .then(() => {
+        const btn = document.getElementById('btn-export');
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy JSON'; }, 1500);
+      });
+  });
+
+  // Open first section by default
+  document.querySelector('.section')?.classList.add('open');
+
+})();
+</script>
+</body>
+</html>

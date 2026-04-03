@@ -45,6 +45,29 @@ const P = {
   mouthColor: [255, 255, 255],
 };
 
+// ── GAUSSIAN SPLAT PARAMETERS ─────────────────────────────────────────────
+// All knobs that control the splat renderer specifically.
+// These are the parameters that have no equivalent in the original R1 face.
+
+const GS = {
+  // Radial gradient falloff shape (two interior stops between peak and zero)
+  gradStop1Pos:    0.45,   // position of first mid-stop  (0–1)
+  gradStop1Alpha:  0.90,   // opacity multiplier at first mid-stop
+  gradStop2Pos:    0.75,   // position of second mid-stop (0–1)
+  gradStop2Alpha:  0.15,   // opacity multiplier at second mid-stop
+
+  // Eye ring splats
+  eyeThickRatio:   0.13,   // ring thickness = min(rx, effRy) × ratio
+  eyeThickMin:     4,      // minimum ring thickness in px
+  eyeGlowMult:     1.3,    // glow-halo radius = thick × mult
+  eyeGlowAlpha:    0.06,   // glow-halo peak opacity
+  eyeCoreAlpha:    0.88,   // core ring peak opacity
+
+  // Arc strokes (brows + mouth)
+  arcGlowMult:     1.2,    // glow-halo radius = thick × mult
+  arcGlowAlpha:    0.09,   // glow-halo opacity factor (× base alpha)
+};
+
 // ── EMOTION PRESETS ──────────────────────────────────────────────────────
 // All pixel values are in scaled space (S already applied).
 // browYL / browYR : brow Y offset relative to eye centre (negative = above)
@@ -106,7 +129,7 @@ const st = {
  * Render a single 2-D Gaussian splat.
  *
  * The canvas is transformed so the unit circle becomes a σ-ellipse,
- * then filled with a radial gradient that approximates e^{-r²/2}.
+ * then filled with a radial gradient shaped by GS.gradStop* values.
  *
  * (x, y)   – centre in canvas pixels
  * (sx, sy) – 1-sigma radii
@@ -121,13 +144,12 @@ function splat(x, y, sx, sy, a, r, g, b, alpha) {
   ctx.rotate(a);
   ctx.scale(sx, sy);
 
-  // Steep falloff: full brightness to ~50% radius, then sharp drop to transparent
   const R = 3;
   const gr = ctx.createRadialGradient(0, 0, 0, 0, 0, R);
-  gr.addColorStop(0,    `rgba(${r},${g},${b},${alpha.toFixed(4)})`);
-  gr.addColorStop(0.45, `rgba(${r},${g},${b},${(alpha * 0.90).toFixed(4)})`);
-  gr.addColorStop(0.75, `rgba(${r},${g},${b},${(alpha * 0.15).toFixed(4)})`);
-  gr.addColorStop(1,    `rgba(${r},${g},${b},0)`);
+  gr.addColorStop(0,                  `rgba(${r},${g},${b},${alpha.toFixed(4)})`);
+  gr.addColorStop(GS.gradStop1Pos,    `rgba(${r},${g},${b},${(alpha * GS.gradStop1Alpha).toFixed(4)})`);
+  gr.addColorStop(GS.gradStop2Pos,    `rgba(${r},${g},${b},${(alpha * GS.gradStop2Alpha).toFixed(4)})`);
+  gr.addColorStop(1,                  `rgba(${r},${g},${b},0)`);
 
   ctx.fillStyle = gr;
   ctx.beginPath();
@@ -147,14 +169,6 @@ function qbez(x0, y0, x1, y1, x2, y2, t) {
 
 /**
  * Draw a curved stroke (brow or mouth) as a chain of overlapping splats.
- *
- * cx, cy  – pivot
- * xSpan   – half-width of the arc
- * curve   – Bézier apex offset (positive arches "up" in face space)
- * rot     – whole-arc rotation in radians
- * thick   – 1-sigma of each splat
- * r,g,b   – colour
- * alpha   – core opacity
  */
 function drawArc(cx, cy, xSpan, curve, rot, thick, r, g, b, alpha) {
   const N    = Math.max(6, Math.ceil((xSpan * 2) / (thick * 0.85)));
@@ -166,8 +180,8 @@ function drawArc(cx, cy, xSpan, curve, rot, thick, r, g, b, alpha) {
     const wx = cx + lx * cosR - ly * sinR;
     const wy = cy + lx * sinR + ly * cosR;
 
-    splat(wx, wy, thick * 1.2, thick * 1.2, 0, r, g, b, alpha * 0.09); // soft glow
-    splat(wx, wy, thick,       thick,       0, r, g, b, alpha);         // bright core
+    splat(wx, wy, thick * GS.arcGlowMult, thick * GS.arcGlowMult, 0, r, g, b, alpha * GS.arcGlowAlpha);
+    splat(wx, wy, thick,                  thick,                   0, r, g, b, alpha);
   }
 }
 
@@ -181,8 +195,7 @@ function drawEye(cx, cy, rx, ry, tiltDeg, lidClosure, r, g, b) {
   const effRy   = ry * Math.max(0, 1 - lidClosure);
   if (effRy < 1) return;
 
-  // Splat thickness ~13% of the smaller semi-axis, minimum 4 px
-  const thick = Math.max(4, Math.min(rx, effRy) * 0.13);
+  const thick = Math.max(GS.eyeThickMin, Math.min(rx, effRy) * GS.eyeThickRatio);
 
   // Ramanujan perimeter approximation → how many splats to place
   const perim = Math.PI * (3*(rx + effRy) - Math.sqrt((3*rx + effRy)*(rx + 3*effRy)));
@@ -195,21 +208,19 @@ function drawEye(cx, cy, rx, ry, tiltDeg, lidClosure, r, g, b) {
     const lx = rx    * Math.cos(theta);
     const ly = effRy * Math.sin(theta);
 
-    // Rotate by eye tilt
     const wx = cx + lx * cosT - ly * sinT;
     const wy = cy + lx * sinT + ly * cosT;
 
-    splat(wx, wy, thick * 1.3, thick * 1.3, 0, r, g, b, 0.06); // outer glow halo
-    splat(wx, wy, thick,       thick,       0, r, g, b, 0.88); // bright ring core
+    splat(wx, wy, thick * GS.eyeGlowMult, thick * GS.eyeGlowMult, 0, r, g, b, GS.eyeGlowAlpha);
+    splat(wx, wy, thick,                  thick,                   0, r, g, b, GS.eyeCoreAlpha);
   }
 }
 
 // ── INTERPOLATION HELPERS ────────────────────────────────────────────────
 
 function lerp(a, b, t) { return a + (b - a) * t; }
-function eio(t) { return t < 0.5 ? 2*t*t : -1 + (4 - 2*t)*t; } // ease-in-out quad
+function eio(t) { return t < 0.5 ? 2*t*t : -1 + (4 - 2*t)*t; }
 
-/** Linearly interpolate all numeric fields between two emotion objects. */
 function lerpEM(a, b, t) {
   const out = {};
   for (const k in a) out[k] = typeof a[k] === 'number' ? lerp(a[k], b[k], t) : b[k];
@@ -234,23 +245,18 @@ function render() {
   const eyeLX = CX - P.eyeHalfGap + st.lookX;
   const eyeRX = CX + P.eyeHalfGap + st.lookX;
 
-  // ── Eyes
   drawEye(eyeLX, eyeY, P.eyeRx, eyeRy, -P.eyeTilt, lid, er, eg, eb);
   drawEye(eyeRX, eyeY, P.eyeRx, eyeRy,  P.eyeTilt, lid, er, eg, eb);
 
-  // ── Brows (Y relative to eye centre — matches r1_face browYOffset convention)
   const browA = e.browAngle * DEG;
   drawArc(eyeLX, eyeY + e.browYL, P.browXSpan, e.browCL, -browA, P.browThick, wr, wg, wb, 0.9);
   drawArc(eyeRX, eyeY + e.browYR, P.browXSpan, e.browCR,  browA, P.browThick, wr, wg, wb, 0.9);
 
-  // ── Mouth (follows gaze very slightly for liveliness)
   const mouthCX = CX + st.lookX * 0.12;
   const mouthCY = CY + e.mouthY;
 
   drawArc(mouthCX, mouthCY, e.mouthW, e.mouthC, 0, P.mouthThick, mr, mg, mb, 0.9);
-
   if (e.mouthOpen > 2) {
-    // Lower jaw arc — mirrors upper curve slightly
     drawArc(mouthCX, mouthCY + e.mouthOpen, e.mouthW * 0.8, -e.mouthC * 0.5,
             0, P.mouthThick, mr, mg, mb, 0.85);
   }
@@ -303,7 +309,7 @@ function startLook() {
 
   function frame(now) {
     let t = Math.min(1, (now - t0) / dur);
-    t = 1 - (1 - t) ** 3;           // ease-out cubic
+    t = 1 - (1 - t) ** 3;
     st.lookX = lerp(ox, tx, t);
     st.lookY = lerp(oy, ty, t);
     if (t < 1) { requestAnimationFrame(frame); return; }
@@ -318,10 +324,6 @@ function tick() { render(); requestAnimationFrame(tick); }
 
 // ── PUBLIC API ────────────────────────────────────────────────────────────
 
-/**
- * Transition to a named emotion.
- * Valid keys: 'neutral' | 'attentive' | 'happy' | 'surprised' | 'thinking' | 'tired'
- */
 window.setEmotion = function (key) {
   if (!EM[key] || key === st.emoKey) return;
   st.prevKey = st.emoKey;
@@ -335,6 +337,9 @@ window.setEmotion = function (key) {
   }
   requestAnimationFrame(anim);
 };
+
+// Expose internals for the designer
+window.faceAPI = { P, GS, EM, st, S };
 
 // ── BOOT ──────────────────────────────────────────────────────────────────
 
