@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>R1 Face — Gaussian Splats</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%;
+      background: #060609;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: system-ui, sans-serif;
+    }
+    canvas { display: block; border-radius: 12px; }
+    #keys {
+      margin-top: 18px;
+      font-size: 12px;
+      letter-spacing: 0.05em;
+      color: #444;
+      display: flex;
+      gap: 20px;
+    }
+    kbd {
+      font-family: monospace;
+      background: #14141e;
+      color: #888;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      border: 1px solid #222;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="face" width="800" height="800"></canvas>
+  <div id="keys">
+    <span><kbd>1</kbd> neutral</span>
+    <span><kbd>2</kbd> attentive</span>
+    <span><kbd>3</kbd> happy</span>
+    <span><kbd>4</kbd> surprised</span>
+    <span><kbd>5</kbd> thinking</span>
+    <span><kbd>6</kbd> tired</span>
+  </div>
+  <script src="face.js"></script>
+  <script>
+    const EMOTION_KEYS = ['neutral', 'attentive', 'happy', 'surprised', 'thinking', 'tired'];
+    document.addEventListener('keydown', e => {
+      const idx = parseInt(e.key, 10) - 1;
+      if (idx >= 0 && idx < EMOTION_KEYS.length) setEmotion(EMOTION_KEYS[idx]);
+    });
+  </script>
+</body>
+</html>
