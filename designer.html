@@ -140,10 +140,10 @@ const SCALED_P   = ['eyeRx','eyeRy','eyeHalfGap','browXSpan','browThick','mouthT
 const SCALED_EM  = ['browYL','browYR','browCL','browCR','eyeYShift','mouthY','mouthW','mouthC','mouthOpen'];
 const LS_KEY     = 'r1gs-state-v2';
 
-// Snapshot of factory defaults for Reset
-const DEFAULTS = JSON.parse(JSON.stringify(exportState()));
-
 let editEmotion = 'neutral';
+
+// Snapshot of factory defaults for Reset (must come after editEmotion is declared)
+const DEFAULTS = JSON.parse(JSON.stringify(exportState()));
 
 // ── EXPORT / IMPORT ────────────────────────────────────────────────────────
 
